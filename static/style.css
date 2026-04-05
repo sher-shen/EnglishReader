@@ -31,6 +31,15 @@ body {
     align-items: center;
 }
 
+.lang-select {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 13px;
+    background: #fff;
+    cursor: pointer;
+}
+
 #vocab-btn {
     padding: 8px 20px;
     background: #5b7a5e;

@@ -11,11 +11,15 @@
     <!-- Library -->
     <div id="library-view">
         <div class="library-header">
-            <h1>My Library</h1>
+            <h1 data-i18n="myLibrary">My Library</h1>
             <div class="header-buttons">
-                <button id="notes-btn" onclick="showNotes()">Notes</button>
-                <button id="vocab-btn" onclick="showVocabulary()">Vocabulary</button>
-                <button id="settings-btn" onclick="showSettings()">Settings</button>
+                <select id="lang-select" onchange="switchLang(this.value)" class="lang-select">
+                    <option value="en">English</option>
+                    <option value="zh">中文</option>
+                </select>
+                <button id="notes-btn" onclick="showNotes()" data-i18n="notes">Notes</button>
+                <button id="vocab-btn" onclick="showVocabulary()" data-i18n="vocabulary">Vocabulary</button>
+                <button id="settings-btn" onclick="showSettings()" data-i18n="settings">Settings</button>
             </div>
         </div>
         <!-- Flashcard -->
@@ -25,20 +29,20 @@
                 <div class="flashcard-sentence" id="flashcard-sentence"></div>
                 <div class="flashcard-cn" id="flashcard-cn" style="display:none;"></div>
                 <div class="flashcard-actions">
-                    <button onclick="toggleFlashcardCn()">Show Translation</button>
-                    <button onclick="loadFlashcard()">Next Word</button>
+                    <button onclick="toggleFlashcardCn()" data-i18n="showTranslation">Show Translation</button>
+                    <button onclick="loadFlashcard()" data-i18n="nextWord">Next Word</button>
                 </div>
             </div>
         </div>
         <div id="book-list">
-            <p class="hint">Place .epub files in the books/ folder, then refresh the page</p>
+            <p class="hint" data-i18n="placeEpub">Place .epub files in the books/ folder, then refresh the page</p>
         </div>
     </div>
 
     <!-- Reader -->
     <div id="reader-view" style="display:none;">
         <div class="reader-topbar">
-            <button onclick="backToLibrary()">← Library</button>
+            <button onclick="backToLibrary()" data-i18n="backToLibrary">← Library</button>
             <span id="book-title-bar"></span>
             <span id="progress-display"></span>
         </div>
@@ -46,10 +50,10 @@
             <div id="viewer"></div>
         </div>
         <div class="reader-bottombar">
-            <button id="prev-btn" onclick="goPrev()">Prev</button>
+            <button id="prev-btn" onclick="goPrev()" data-i18n="prev">Prev</button>
             <input type="range" id="progress-slider" min="0" max="100" value="0"
                    oninput="onSliderChange(this.value)">
-            <button id="next-btn" onclick="goNext()">Next</button>
+            <button id="next-btn" onclick="goNext()" data-i18n="next">Next</button>
         </div>
     </div>
 
@@ -59,7 +63,7 @@
         <button class="hl-color" data-color="green" style="background:#b8f0b8;" onclick="addHighlight('green')"></button>
         <button class="hl-color" data-color="blue" style="background:#a8d4ff;" onclick="addHighlight('blue')"></button>
         <button class="hl-color" data-color="pink" style="background:#ffb8d4;" onclick="addHighlight('pink')"></button>
-        <button class="hl-translate-btn" onclick="translateSelection()">Translate</button>
+        <button class="hl-translate-btn" onclick="translateSelection()" data-i18n="translate">Translate</button>
     </div>
 
     <!-- Translation Popup -->
@@ -75,9 +79,10 @@
             <button id="save-btn" onclick="saveCurrentWord()">☆ Save</button>
         </div>
         <div class="popup-ask">
-            <input type="text" id="ask-input" placeholder="Ask AI a question about this word..."
+            <input type="text" id="ask-input" data-i18n-placeholder="askPlaceholder"
+                   placeholder="Ask AI a question about this word..."
                    onkeydown="if(event.key==='Enter')askAI()">
-            <button onclick="askAI()">Send</button>
+            <button onclick="askAI()" data-i18n="send">Send</button>
         </div>
         <div id="ask-result" style="display:none;"></div>
     </div>
@@ -85,8 +90,8 @@
     <!-- Vocabulary -->
     <div id="vocab-view" style="display:none;">
         <div class="library-header">
-            <button onclick="hideVocabulary()">← Back</button>
-            <h1>Vocabulary</h1>
+            <button onclick="hideVocabulary()" data-i18n="back">← Back</button>
+            <h1 data-i18n="vocabulary">Vocabulary</h1>
             <span id="vocab-count"></span>
         </div>
         <div id="vocab-list"></div>
@@ -95,18 +100,18 @@
     <!-- Notes -->
     <div id="notes-view" style="display:none;">
         <div class="library-header">
-            <button onclick="hideNotes()">← Back</button>
-            <h1>Reading Notes</h1>
+            <button onclick="hideNotes()" data-i18n="back">← Back</button>
+            <h1 data-i18n="readingNotes">Reading Notes</h1>
             <div class="header-buttons">
                 <select id="notes-book-filter" onchange="filterNotes()">
-                    <option value="all">All Books</option>
+                    <option value="all" data-i18n="allBooks">All Books</option>
                 </select>
                 <select id="notes-color-filter" onchange="filterNotes()">
-                    <option value="all">All Colors</option>
-                    <option value="yellow">Yellow</option>
-                    <option value="green">Green</option>
-                    <option value="blue">Blue</option>
-                    <option value="pink">Pink</option>
+                    <option value="all" data-i18n="allColors">All Colors</option>
+                    <option value="yellow" data-i18n="yellow">Yellow</option>
+                    <option value="green" data-i18n="green">Green</option>
+                    <option value="blue" data-i18n="blue">Blue</option>
+                    <option value="pink" data-i18n="pink">Pink</option>
                 </select>
             </div>
         </div>
@@ -117,30 +122,25 @@
     <div id="settings-modal" style="display:none;">
         <div class="settings-content">
             <div class="settings-header">
-                <h2>Settings</h2>
+                <h2 data-i18n="settingsTitle">Settings</h2>
                 <button class="popup-close" onclick="hideSettings()">×</button>
             </div>
             <div class="settings-body">
-                <label>AI CLI Command</label>
+                <label data-i18n="aiCli">AI CLI Command</label>
                 <input type="text" id="settings-cli" placeholder="claude">
-                <p class="settings-hint">
-                    Default: <code>claude</code>. You can change this to any AI CLI you have installed
-                    (e.g., <code>chatgpt</code>, <code>gemini</code>).
-                </p>
-                <label>Prompt Argument</label>
+                <p class="settings-hint" data-i18n="aiCliHint">Default: claude. You can change this to any AI CLI you have installed.</p>
+
+                <label data-i18n="promptArg">Prompt Argument</label>
                 <input type="text" id="settings-args" placeholder="-p">
-                <p class="settings-hint">
-                    The CLI flag for passing a prompt. Claude uses <code>-p</code>.
-                </p>
-                <label>Extra Arguments</label>
+                <p class="settings-hint" data-i18n="promptArgHint">The CLI flag for passing a prompt. Claude uses -p.</p>
+
+                <label data-i18n="extraArgs">Extra Arguments</label>
                 <input type="text" id="settings-extra" placeholder="--no-input">
-                <p class="settings-hint">
-                    Additional CLI flags, space-separated. Leave empty if not needed.
-                </p>
+                <p class="settings-hint" data-i18n="extraArgsHint">Additional CLI flags, space-separated. Leave empty if not needed.</p>
             </div>
             <div class="settings-footer">
-                <button onclick="saveSettings()">Save</button>
-                <button onclick="hideSettings()" style="background:#ccc;color:#333;">Cancel</button>
+                <button onclick="saveSettings()" data-i18n="saveBtn">Save</button>
+                <button onclick="hideSettings()" style="background:#ccc;color:#333;" data-i18n="cancel">Cancel</button>
             </div>
         </div>
     </div>

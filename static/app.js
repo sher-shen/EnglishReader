@@ -1,3 +1,134 @@
+// === i18n ===
+const LANG = {
+    en: {
+        myLibrary: 'My Library',
+        notes: 'Notes',
+        vocabulary: 'Vocabulary',
+        settings: 'Settings',
+        showTranslation: 'Show Translation',
+        nextWord: 'Next Word',
+        placeEpub: 'Place .epub files in the books/ folder, then refresh the page',
+        backToLibrary: '← Library',
+        prev: 'Prev',
+        next: 'Next',
+        translate: 'Translate',
+        translating: 'Translating...',
+        thinking: 'Thinking...',
+        translationFailed: t('translationFailed'),
+        requestFailed: t('requestFailed'),
+        save: '☆ Save',
+        saved: '★ Saved',
+        saveFailed: t('saveFailed'),
+        askPlaceholder: 'Ask AI a question about this word...',
+        send: 'Send',
+        back: '← Back',
+        words: 'words',
+        noWords: 'No saved words yet. Click on words while reading to save them.',
+        jumpToSource: '${t('jumpToSource')}',
+        deleteWord: 'Delete',
+        deleteWordConfirm: 'Delete',
+        bookNotFound: 'Book not found. The file may have been moved.',
+        readingNotes: 'Reading Notes',
+        allBooks: 'All Books',
+        allColors: 'All Colors',
+        yellow: 'Yellow',
+        green: 'Green',
+        blue: 'Blue',
+        pink: 'Pink',
+        noHighlights: 'No highlights yet. Select text while reading to highlight it.',
+        highlights: 'highlights',
+        deleteHighlight: 'Delete this highlight?',
+        settingsTitle: 'Settings',
+        aiCli: 'AI CLI Command',
+        aiCliHint: 'Default: claude. You can change this to any AI CLI you have installed.',
+        promptArg: 'Prompt Argument',
+        promptArgHint: 'The CLI flag for passing a prompt. Claude uses -p.',
+        extraArgs: 'Extra Arguments',
+        extraArgsHint: 'Additional CLI flags, space-separated. Leave empty if not needed.',
+        saveBtn: 'Save',
+        cancel: 'Cancel',
+        settingsSaved: 'Settings saved',
+        generatingExample: 'Generating example...',
+        langLabel: 'Language',
+    },
+    zh: {
+        myLibrary: '我的书架',
+        notes: '读书笔记',
+        vocabulary: '生词本',
+        settings: '设置',
+        showTranslation: '显示中文',
+        nextWord: '换一个',
+        placeEpub: '将 .epub 文件放入 books/ 文件夹，然后刷新页面',
+        backToLibrary: '← 返回书架',
+        prev: '上一页',
+        next: '下一页',
+        translate: '翻译',
+        translating: '翻译中...',
+        thinking: '思考中...',
+        translationFailed: '翻译失败，请重试',
+        requestFailed: '请求失败，请重试',
+        save: '☆ 收藏',
+        saved: '★ 已收藏',
+        saveFailed: '收藏失败',
+        askPlaceholder: '有问题？输入后按回车问 AI...',
+        send: '发送',
+        back: '← 返回',
+        words: '个词',
+        noWords: '还没有收藏的生词，阅读时点击单词即可收藏',
+        jumpToSource: '跳转到原文 →',
+        deleteWord: '删除',
+        deleteWordConfirm: '确定删除',
+        bookNotFound: '找不到这本书，可能文件已被移动',
+        readingNotes: '读书笔记',
+        allBooks: '全部书籍',
+        allColors: '全部颜色',
+        yellow: '黄色',
+        green: '绿色',
+        blue: '蓝色',
+        pink: '粉色',
+        noHighlights: '还没有高亮笔记，阅读时选中文字即可高亮',
+        highlights: '条高亮',
+        deleteHighlight: '确定删除这条高亮吗？',
+        settingsTitle: '设置',
+        aiCli: 'AI CLI 命令',
+        aiCliHint: '默认使用 claude。可以改成你安装的其他 AI CLI 工具。',
+        promptArg: 'Prompt 参数',
+        promptArgHint: '传递 prompt 的参数。Claude 用 -p。',
+        extraArgs: '额外参数',
+        extraArgsHint: '其他需要的参数，多个用空格分隔。可留空。',
+        saveBtn: '保存',
+        cancel: '取消',
+        settingsSaved: '设置已保存',
+        generatingExample: '生成例句中...',
+        langLabel: '语言',
+    }
+};
+
+let currentLang = localStorage.getItem('reader-lang') || 'en';
+
+function t(key) {
+    return (LANG[currentLang] && LANG[currentLang][key]) || LANG.en[key] || key;
+}
+
+function switchLang(lang) {
+    currentLang = lang;
+    localStorage.setItem('reader-lang', lang);
+    applyLang();
+}
+
+function applyLang() {
+    // Update all elements with data-i18n attribute
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = t(el.dataset.i18n);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        el.placeholder = t(el.dataset.i18nPlaceholder);
+    });
+    // Update language selector
+    const sel = document.getElementById('lang-select');
+    if (sel) sel.value = currentLang;
+}
+
 // === 全局状态 ===
 let currentBook = null;
 let currentRendition = null;
@@ -281,7 +412,7 @@ async function showNotes() {
     // 填充书籍筛选下拉框
     const bookFilter = document.getElementById('notes-book-filter');
     const bookNames = Object.keys(allHighlights);
-    bookFilter.innerHTML = '<option value="all">All Books</option>' +
+    bookFilter.innerHTML = `<option value="all">${t('allBooks')}</option>` +
         bookNames.map(fn => `<option value="${escapeHtml(fn)}">${escapeHtml(fn.replace('.epub',''))}</option>`).join('');
 
     renderNotes(allHighlights);
@@ -333,7 +464,7 @@ function renderNotes(allHighlights) {
                     <div class="note-card-meta">
                         <span>${h.date}</span>
                         <span>
-                            ${h.cfiRange ? `<span class="jump-link" onclick="jumpToHighlight('${escapeAttr(filename)}', '${escapeAttr(bookName)}', '${escapeAttr(h.cfiRange)}')">Jump to source →</span>` : ''}
+                            ${h.cfiRange ? `<span class="jump-link" onclick="jumpToHighlight('${escapeAttr(filename)}', '${escapeAttr(bookName)}', '${escapeAttr(h.cfiRange)}')">${t('jumpToSource')}</span>` : ''}
                             <button class="note-delete" onclick="event.stopPropagation(); deleteHighlight('${escapeAttr(filename)}', '${escapeAttr(h.id)}')" title="删除">×</button>
                         </span>
                     </div>
@@ -345,9 +476,9 @@ function renderNotes(allHighlights) {
     }
 
     if (totalCount === 0) {
-        list.innerHTML = '<p class="notes-empty">No highlights yet. Select text while reading to highlight it.</p>';
+        list.innerHTML = `<p class="notes-empty">${t('noHighlights')}</p>`;
     } else {
-        list.innerHTML = `<div class="notes-count">${totalCount} highlights</div>` + html;
+        list.innerHTML = `<div class="notes-count">${totalCount} ${t('highlights')}</div>` + html;
     }
 }
 
@@ -357,7 +488,7 @@ function hideNotes() {
 }
 
 async function deleteHighlight(filename, highlightId) {
-    if (!confirm('Delete this highlight?')) return;
+    if (!confirm(t('deleteHighlight'))) return;
     await fetch(`/api/highlights/${encodeURIComponent(filename)}/${highlightId}`, { method: 'DELETE' });
     // 刷新笔记页面
     filterNotes();
@@ -462,10 +593,10 @@ function getSentenceFromSelection(doc, selection) {
 function showPopup(word, sentence, x, y) {
     const popup = document.getElementById('popup');
     document.getElementById('popup-word').textContent = word;
-    document.getElementById('popup-translation').innerHTML = '<div class="loading">Translating...</div>';
+    document.getElementById('popup-translation').innerHTML = `<div class="loading">${t('translating')}</div>`;
     document.getElementById('ask-input').value = '';
     document.getElementById('ask-result').style.display = 'none';
-    document.getElementById('save-btn').textContent = '☆ Save';
+    document.getElementById('save-btn').textContent = t('save');
     document.getElementById('save-btn').classList.remove('saved');
 
     popupState.word = word;
@@ -520,7 +651,7 @@ async function translateWord(word, sentence) {
         popupState.translation = data.result;
         document.getElementById('popup-translation').textContent = data.result;
     } catch (e) {
-        document.getElementById('popup-translation').textContent = 'Translation failed. Please try again.';
+        document.getElementById('popup-translation').textContent = t('translationFailed');
     }
 }
 
@@ -532,7 +663,7 @@ async function askAI() {
 
     const resultDiv = document.getElementById('ask-result');
     resultDiv.style.display = 'block';
-    resultDiv.innerHTML = '<div class="loading">Thinking...</div>';
+    resultDiv.innerHTML = `<div class="loading">${t('thinking')}</div>`;
     input.value = '';
 
     try {
@@ -548,7 +679,7 @@ async function askAI() {
         const data = await resp.json();
         resultDiv.textContent = data.result;
     } catch (e) {
-        resultDiv.textContent = 'Request failed. Please try again.';
+        resultDiv.textContent = t('requestFailed');
     }
 }
 
@@ -570,10 +701,10 @@ async function saveCurrentWord() {
             })
         });
         const data = await resp.json();
-        btn.textContent = `★ Saved (${data.total_occurrences})`;
+        btn.textContent = `${t('saved')} (${data.total_occurrences})`;
         btn.classList.add('saved');
     } catch (e) {
-        btn.textContent = 'Save failed';
+        btn.textContent = t('saveFailed');
     }
 }
 
@@ -611,11 +742,11 @@ async function showVocabulary() {
     const vocab = await resp.json();
     const words = Object.keys(vocab).sort();
 
-    document.getElementById('vocab-count').textContent = `${words.length} words`;
+    document.getElementById('vocab-count').textContent = `${words.length} ${t('words')}`;
 
     if (words.length === 0) {
         document.getElementById('vocab-list').innerHTML =
-            '<p class="vocab-empty">No saved words yet. Click on words while reading to save them.</p>';
+            `<p class="vocab-empty">${t('noWords')}</p>`;
         return;
     }
 
@@ -626,7 +757,7 @@ async function showVocabulary() {
                 <div class="sentence">"${escapeHtml(occ.sentence)}"</div>
                 <div class="meta">
                     📚 ${escapeHtml(occ.book)} · ${occ.date}
-                    ${occ.cfi ? `<span class="jump-link" onclick="jumpToBook('${escapeAttr(occ.book)}', '${escapeAttr(occ.cfi)}')">Jump to source →</span>` : ''}
+                    ${occ.cfi ? `<span class="jump-link" onclick="jumpToBook('${escapeAttr(occ.book)}', '${escapeAttr(occ.cfi)}')">${t('jumpToSource')}</span>` : ''}
                 </div>
             </div>
         `).join('');
@@ -650,7 +781,7 @@ function hideVocabulary() {
 }
 
 async function deleteWord(word) {
-    if (!confirm(`Delete "${word}"?`)) return;
+    if (!confirm(`${t('deleteWordConfirm')} "${word}"?`)) return;
     await fetch(`/api/vocabulary/${encodeURIComponent(word)}`, { method: 'DELETE' });
     showVocabulary();
 }
@@ -669,7 +800,7 @@ async function jumpToBook(bookTitle, cfi) {
             }
         }, 500);
     } else {
-        alert('Book not found. The file may have been moved.');
+        alert(t('bookNotFound'));
     }
 }
 
@@ -709,7 +840,7 @@ async function loadFlashcard() {
             sentenceEl.textContent = data.simple_sentence;
             cnEl.textContent = data.simple_sentence_cn || '';
         } else {
-            sentenceEl.innerHTML = '<span class="loading">Generating example...</span>';
+            sentenceEl.innerHTML = `<span class="loading">${t('generatingExample')}</span>`;
         }
     } catch (e) {
         flashcard.style.display = 'none';
@@ -764,9 +895,9 @@ async function saveSettings() {
             })
         });
         hideSettings();
-        alert('Settings saved');
+        alert(t('settingsSaved'));
     } catch (e) {
-        alert('Save failed');
+        alert(t('saveFailed'));
     }
 }
 
@@ -778,5 +909,6 @@ document.getElementById('settings-modal').addEventListener('click', (e) => {
 });
 
 // === 启动 ===
+applyLang();
 loadLibrary();
 loadFlashcard();

@@ -6,6 +6,8 @@ import os
 import random
 import subprocess
 import time
+import urllib.request
+import urllib.parse
 from pathlib import Path
 
 from flask import Flask, request, jsonify, send_from_directory
@@ -100,6 +102,53 @@ def update_config():
     return jsonify(config)
 
 
+# === 免费词典 API ===
+
+def lookup_dictionary(word):
+    """用免费词典 API 查词，返回格式化结果"""
+    word_clean = word.strip().lower()
+    url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{urllib.parse.quote(word_clean)}"
+
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'EnglishReader/1.0'})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode())
+
+        if not data or not isinstance(data, list):
+            return None
+
+        entry = data[0]
+        result_parts = []
+
+        # 音标
+        phonetics = entry.get('phonetics', [])
+        phonetic_text = ''
+        for p in phonetics:
+            if p.get('text'):
+                phonetic_text = p['text']
+                break
+        if phonetic_text:
+            result_parts.append(f"{word_clean}  {phonetic_text}")
+        else:
+            result_parts.append(word_clean)
+
+        # 释义
+        for meaning in entry.get('meanings', [])[:3]:
+            pos = meaning.get('partOfSpeech', '')
+            defs = meaning.get('definitions', [])[:2]
+            for d in defs:
+                definition = d.get('definition', '')
+                example = d.get('example', '')
+                line = f"  [{pos}] {definition}"
+                if example:
+                    line += f'\n    e.g. "{example}"'
+                result_parts.append(line)
+
+        return '\n'.join(result_parts)
+    except Exception:
+        return None
+
+
 # === 翻译 ===
 
 @app.route('/api/translate', methods=['POST'])
@@ -109,6 +158,7 @@ def translate():
     sentence = data.get('sentence', '')
     question = data.get('question', '')
 
+    # 有问题 → 用 AI
     if question:
         prompt = (
             f"用户正在阅读英文原著，选中了一个词/短语，有问题要问。\n\n"
@@ -117,24 +167,31 @@ def translate():
             f"用户的问题：{question}\n\n"
             f"请用中文简洁回答。"
         )
-    else:
-        prompt = (
-            f"用户正在阅读英文原著，点击了一个不认识的词。请给出这个词的翻译。\n\n"
-            f"单词/短语：{word}\n"
-            f"所在句子：{sentence}\n\n"
-            f"请按以下格式简洁回答（不要加多余的话）：\n"
-            f"【释义】中文意思（如果有多个常见含义，列出2-3个）\n"
-            f"【音标】国际音标\n"
-            f"【句中含义】在这个句子中具体是什么意思"
-        )
+        try:
+            result = call_ai(prompt)
+            return jsonify({'result': result})
+        except Exception as e:
+            return jsonify({'result': f'AI error: {str(e)}'}), 500
 
+    # 单词查询 → 先用免费词典 API（快且免费）
+    dict_result = lookup_dictionary(word)
+    if dict_result:
+        return jsonify({'result': dict_result, 'source': 'dictionary'})
+
+    # 词典没查到（可能是短语或生僻词）→ 用 AI
+    prompt = (
+        f"用户正在阅读英文原著，点击了一个不认识的词/短语。请给出翻译。\n\n"
+        f"单词/短语：{word}\n"
+        f"所在句子：{sentence}\n\n"
+        f"请按以下格式简洁回答：\n"
+        f"【释义】中文意思\n"
+        f"【句中含义】在这个句子中具体是什么意思"
+    )
     try:
         result = call_ai(prompt)
-        return jsonify({'result': result})
-    except subprocess.TimeoutExpired:
-        return jsonify({'result': '翻译超时，请重试'}), 500
+        return jsonify({'result': result, 'source': 'ai'})
     except Exception as e:
-        return jsonify({'result': f'出错了：{str(e)}'}), 500
+        return jsonify({'result': f'Translation failed: {str(e)}'}), 500
 
 
 # === 随机生词闪卡 ===

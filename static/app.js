@@ -14,17 +14,17 @@ const LANG = {
         translate: 'Translate',
         translating: 'Translating...',
         thinking: 'Thinking...',
-        translationFailed: t('translationFailed'),
-        requestFailed: t('requestFailed'),
+        translationFailed: 'Translation failed. Please try again.',
+        requestFailed: 'Request failed. Please try again.',
         save: '☆ Save',
         saved: '★ Saved',
-        saveFailed: t('saveFailed'),
+        saveFailed: 'Save failed',
         askPlaceholder: 'Ask AI a question about this word...',
         send: 'Send',
         back: '← Back',
         words: 'words',
         noWords: 'No saved words yet. Click on words while reading to save them.',
-        jumpToSource: '${t('jumpToSource')}',
+        jumpToSource: 'Jump to source →',
         deleteWord: 'Delete',
         deleteWordConfirm: 'Delete',
         bookNotFound: 'Book not found. The file may have been moved.',
@@ -155,16 +155,22 @@ async function loadLibrary() {
     const list = document.getElementById('book-list');
 
     if (books.length === 0) {
-        list.innerHTML = '<p class="hint">将 .epub 文件放入 books/ 文件夹，然后刷新页面</p>';
+        list.innerHTML = `<p class="hint">${t('placeEpub')}</p>`;
         return;
     }
 
-    list.innerHTML = books.map(b => `
-        <div class="book-card" onclick="openBook('${b.filename}', '${b.title}')">
+    list.innerHTML = books.map((b, i) => `
+        <div class="book-card" data-book-index="${i}">
             <div class="book-icon">📖</div>
-            <div class="book-name">${b.title}</div>
+            <div class="book-name">${escapeHtml(b.title)}</div>
         </div>
     `).join('');
+
+    // Use event delegation to avoid string escaping issues in onclick
+    list.querySelectorAll('.book-card').forEach(card => {
+        const idx = parseInt(card.dataset.bookIndex);
+        card.addEventListener('click', () => openBook(books[idx].filename, books[idx].title));
+    });
 }
 
 // === 打开书籍 ===

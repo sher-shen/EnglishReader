@@ -102,10 +102,228 @@ def update_config():
     return jsonify(config)
 
 
+# === 词根词缀 ===
+
+PREFIXES = {
+    'un': ('un-', 'not, opposite 不/相反'),
+    're': ('re-', 'again, back 再/回'),
+    'in': ('in-', 'not, into 不/进入'),
+    'im': ('im-', 'not 不'),
+    'ir': ('ir-', 'not 不'),
+    'il': ('il-', 'not 不'),
+    'dis': ('dis-', 'not, apart 不/分开'),
+    'mis': ('mis-', 'wrong 错误'),
+    'pre': ('pre-', 'before 在...之前'),
+    'post': ('post-', 'after 在...之后'),
+    'over': ('over-', 'too much, above 过度/在上'),
+    'under': ('under-', 'below, not enough 在下/不足'),
+    'out': ('out-', 'beyond, outside 超过/外'),
+    'sub': ('sub-', 'under 在下/次'),
+    'super': ('super-', 'above, beyond 超级/在上'),
+    'inter': ('inter-', 'between 在...之间'),
+    'trans': ('trans-', 'across 跨越'),
+    'ex': ('ex-', 'out, former 出/前'),
+    'anti': ('anti-', 'against 反对'),
+    'auto': ('auto-', 'self 自'),
+    'bi': ('bi-', 'two 二'),
+    'co': ('co-', 'together 共同'),
+    'de': ('de-', 'down, remove 向下/去除'),
+    'en': ('en-', 'make, put in 使/放入'),
+    'em': ('em-', 'make, put in 使/放入'),
+    'fore': ('fore-', 'before 在前'),
+    'micro': ('micro-', 'small 微小'),
+    'mid': ('mid-', 'middle 中间'),
+    'mono': ('mono-', 'one 单'),
+    'multi': ('multi-', 'many 多'),
+    'non': ('non-', 'not 非'),
+    'semi': ('semi-', 'half 半'),
+    'tri': ('tri-', 'three 三'),
+    'uni': ('uni-', 'one 单一'),
+}
+
+SUFFIXES = {
+    'able': ('-able', 'can be done 可...的'),
+    'ible': ('-ible', 'can be done 可...的'),
+    'al': ('-al', 'relating to ...的'),
+    'ial': ('-ial', 'relating to ...的'),
+    'tion': ('-tion', 'state, action 名词化'),
+    'sion': ('-sion', 'state, action 名词化'),
+    'ation': ('-ation', 'state, action 名词化'),
+    'ment': ('-ment', 'result, action 名词化'),
+    'ness': ('-ness', 'state, quality 状态'),
+    'ity': ('-ity', 'state, quality 性质'),
+    'ous': ('-ous', 'full of 充满...的'),
+    'ious': ('-ious', 'full of 充满...的'),
+    'ful': ('-ful', 'full of 充满...的'),
+    'less': ('-less', 'without 无...的'),
+    'ly': ('-ly', 'in a way ...地'),
+    'er': ('-er', 'one who, more ...者/更'),
+    'or': ('-or', 'one who ...者'),
+    'ist': ('-ist', 'one who ...者'),
+    'ism': ('-ism', 'belief, system 主义'),
+    'ize': ('-ize', 'to make ...化'),
+    'ise': ('-ise', 'to make ...化'),
+    'fy': ('-fy', 'to make 使...化'),
+    'en': ('-en', 'to make, made of 使/由...制'),
+    'ive': ('-ive', 'tending to ...的'),
+    'ative': ('-ative', 'tending to ...的'),
+    'ing': ('-ing', 'action, state 进行中'),
+    'ed': ('-ed', 'past, having 过去/已'),
+    'ant': ('-ant', 'one who, being ...的/者'),
+    'ent': ('-ent', 'one who, being ...的/者'),
+    'ward': ('-ward', 'direction 向...方向'),
+    'ship': ('-ship', 'state, position ...关系/身份'),
+    'dom': ('-dom', 'state, realm 领域/状态'),
+    'logy': ('-logy', 'study of ...学'),
+    'graph': ('-graph', 'writing, record 写/记录'),
+}
+
+ROOTS = {
+    'act': ('act', 'do 做/行动'),
+    'aud': ('aud', 'hear 听'),
+    'bene': ('bene', 'good 好'),
+    'bio': ('bio', 'life 生命'),
+    'cap': ('cap/capt', 'take, seize 拿/抓'),
+    'capt': ('cap/capt', 'take, seize 拿/抓'),
+    'ced': ('ced/cess', 'go, yield 走/让'),
+    'cess': ('ced/cess', 'go, yield 走/让'),
+    'cred': ('cred', 'believe 相信'),
+    'dict': ('dict', 'say 说'),
+    'duc': ('duc/duct', 'lead 引导'),
+    'duct': ('duc/duct', 'lead 引导'),
+    'fac': ('fac/fact', 'make, do 做'),
+    'fact': ('fac/fact', 'make, do 做'),
+    'fer': ('fer', 'carry 带/运'),
+    'form': ('form', 'shape 形状'),
+    'gen': ('gen', 'birth, kind 出生/种类'),
+    'graph': ('graph', 'write 写'),
+    'ject': ('ject', 'throw 扔/投'),
+    'jud': ('jud/jur', 'judge 判断'),
+    'jur': ('jud/jur', 'judge, law 判断/法律'),
+    'log': ('log/logy', 'word, study 言/学'),
+    'luc': ('luc/lum', 'light 光'),
+    'lum': ('luc/lum', 'light 光'),
+    'man': ('man/manu', 'hand 手'),
+    'manu': ('man/manu', 'hand 手'),
+    'mit': ('mit/miss', 'send 发送'),
+    'miss': ('mit/miss', 'send 发送'),
+    'mob': ('mob/mot/mov', 'move 移动'),
+    'mot': ('mob/mot/mov', 'move 移动'),
+    'mov': ('mob/mot/mov', 'move 移动'),
+    'mort': ('mort', 'death 死'),
+    'path': ('path', 'feel, suffer 感受/苦'),
+    'ped': ('ped', 'foot 脚'),
+    'pend': ('pend/pens', 'hang, pay 悬/付'),
+    'pens': ('pend/pens', 'hang, pay 悬/付'),
+    'phil': ('phil', 'love 爱'),
+    'phon': ('phon', 'sound 声音'),
+    'photo': ('photo', 'light 光'),
+    'port': ('port', 'carry 带/运'),
+    'pos': ('pos/pon', 'put, place 放置'),
+    'pon': ('pos/pon', 'put, place 放置'),
+    'rupt': ('rupt', 'break 断/破'),
+    'scrib': ('scrib/script', 'write 写'),
+    'script': ('scrib/script', 'write 写'),
+    'sens': ('sens/sent', 'feel 感觉'),
+    'sent': ('sens/sent', 'feel 感觉'),
+    'spec': ('spec/spect', 'look 看'),
+    'spect': ('spec/spect', 'look 看'),
+    'struct': ('struct', 'build 建造'),
+    'tact': ('tact/tang', 'touch 触'),
+    'tang': ('tact/tang', 'touch 触'),
+    'temp': ('temp', 'time 时间'),
+    'ten': ('ten/tain', 'hold 持/保'),
+    'tain': ('ten/tain', 'hold 持/保'),
+    'tract': ('tract', 'pull, draw 拉/拖'),
+    'ven': ('ven/vent', 'come 来'),
+    'vent': ('ven/vent', 'come 来'),
+    'ver': ('ver/vert', 'turn 转'),
+    'vert': ('ver/vert', 'turn 转'),
+    'vid': ('vid/vis', 'see 看'),
+    'vis': ('vid/vis', 'see 看'),
+    'voc': ('voc/vok', 'call, voice 叫/声'),
+    'vok': ('voc/vok', 'call, voice 叫/声'),
+    'volv': ('volv', 'roll 滚/卷'),
+}
+
+
+def analyze_morphology(word):
+    """分析词根词缀"""
+    word = word.lower().strip()
+    if len(word) < 4:
+        return ''
+
+    parts = []
+
+    # Check prefix (longest match first)
+    found_prefix = ''
+    for length in range(6, 1, -1):
+        prefix = word[:length]
+        if prefix in PREFIXES:
+            label, meaning = PREFIXES[prefix]
+            found_prefix = prefix
+            parts.append(f"{label} ({meaning})")
+            break
+
+    # Check suffix (longest match first)
+    found_suffix = ''
+    for length in range(5, 1, -1):
+        suffix = word[-length:]
+        if suffix in SUFFIXES:
+            label, meaning = SUFFIXES[suffix]
+            found_suffix = suffix
+            parts.append(f"{label} ({meaning})")
+            break
+
+    # Check root in the middle part
+    start = len(found_prefix) if found_prefix else 0
+    end = len(word) - len(found_suffix) if found_suffix else len(word)
+    middle = word[start:end]
+
+    if len(middle) >= 3:
+        for length in range(len(middle), 2, -1):
+            for i in range(len(middle) - length + 1):
+                segment = middle[i:i+length]
+                if segment in ROOTS:
+                    label, meaning = ROOTS[segment]
+                    parts.insert(len(parts) - 1 if found_suffix else len(parts),
+                                f"{label} ({meaning})")
+                    break
+            else:
+                continue
+            break
+
+    if not parts:
+        return ''
+
+    return '【词根词缀】' + ' + '.join(parts)
+
+
+# === 免费翻译 API ===
+
+def translate_to_chinese(text):
+    """用 MyMemory 免费翻译 API 获取中文翻译"""
+    try:
+        params = urllib.parse.urlencode({
+            'q': text[:500],
+            'langpair': 'en|zh-CN'
+        })
+        url = f"https://api.mymemory.translated.net/get?{params}"
+        req = urllib.request.Request(url, headers={'User-Agent': 'EnglishReader/1.0'})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode())
+        translated = data.get('responseData', {}).get('translatedText', '')
+        if translated and translated != text:
+            return translated
+    except Exception:
+        pass
+    return ''
+
+
 # === 免费词典 API ===
 
 def lookup_dictionary(word):
-    """用免费词典 API 查词，返回格式化结果"""
+    """用免费词典 API 查词，返回中英双语结果"""
     word_clean = word.strip().lower()
     url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{urllib.parse.quote(word_clean)}"
 
@@ -132,13 +350,24 @@ def lookup_dictionary(word):
         else:
             result_parts.append(word_clean)
 
-        # 释义
+        # 获取中文翻译
+        cn = translate_to_chinese(word_clean)
+        if cn:
+            result_parts.append(f"【中文】{cn}")
+
+        # 词根词缀分析
+        morphology = analyze_morphology(word_clean)
+        if morphology:
+            result_parts.append(morphology)
+
+        # 英文释义
         for meaning in entry.get('meanings', [])[:3]:
             pos = meaning.get('partOfSpeech', '')
             defs = meaning.get('definitions', [])[:2]
             for d in defs:
                 definition = d.get('definition', '')
                 example = d.get('example', '')
+                # 英文释义
                 line = f"  [{pos}] {definition}"
                 if example:
                     line += f'\n    e.g. "{example}"'

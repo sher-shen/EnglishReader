@@ -50,6 +50,7 @@ const LANG = {
         settingsSaved: 'Settings saved',
         generatingExample: 'Generating example...',
         langLabel: 'Language',
+        jumpToPagePrompt: 'Enter page number:',
     },
     zh: {
         myLibrary: '我的书架',
@@ -96,6 +97,7 @@ const LANG = {
         promptArgHint: '传递 prompt 的参数。Claude 用 -p。',
         extraArgs: '额外参数',
         extraArgsHint: '其他需要的参数，多个用空格分隔。可留空。',
+        jumpToPagePrompt: '输入页码：',
         saveBtn: '保存',
         cancel: '取消',
         settingsSaved: '设置已保存',
@@ -222,11 +224,12 @@ async function openBook(filename, title) {
         }
 
         // 更新章节标题显示
-        updateChapterTitle(location.start.cfi);
+        updateChapterTitle(location);
     });
 
-    // 生成位置信息
+    // 生成位置信息 + 构建章节映射
     currentBook.ready.then(() => {
+        buildChapterMap();
         return currentBook.locations.generate(1600);
     });
 
@@ -743,54 +746,64 @@ function onSliderChange(value) {
     }
 }
 
-// 进度条悬停时显示章节名
-function onSliderHover(e) {
-    if (!currentBook || !currentBook.locations || !currentBook.locations.length()) return;
-    const slider = e.target;
-    const rect = slider.getBoundingClientRect();
-    const percent = (e.clientX - rect.left) / rect.width;
-    const cfi = currentBook.locations.cfiFromPercentage(Math.max(0, Math.min(1, percent)));
+// === 章节检测 ===
 
-    let chapterLabel = '';
-    if (currentBook.navigation && currentBook.navigation.toc) {
-        chapterLabel = getChapterFromCfi(cfi);
-    }
+// 预处理 TOC，建立 spine index → chapter label 的映射
+let chapterMap = []; // [{spineIndex, label}]
 
-    const tooltip = document.getElementById('slider-tooltip');
-    if (chapterLabel) {
-        const page = Math.round(percent * currentBook.locations.length());
-        tooltip.textContent = chapterLabel + ' (' + page + ')';
-        tooltip.style.display = 'block';
-        tooltip.style.left = (e.clientX - tooltip.offsetWidth / 2) + 'px';
-        tooltip.style.top = (rect.top - 32) + 'px';
-    } else {
-        tooltip.style.display = 'none';
+function buildChapterMap() {
+    chapterMap = [];
+    if (!currentBook || !currentBook.navigation || !currentBook.navigation.toc) return;
+
+    const toc = flattenToc(currentBook.navigation.toc);
+    for (const item of toc) {
+        const href = item.href.split('#')[0];
+        const spineItem = currentBook.spine.get(href);
+        if (spineItem) {
+            chapterMap.push({
+                spineIndex: spineItem.index,
+                label: item.label.trim(),
+                href: item.href
+            });
+        }
     }
+    // Sort by spine index
+    chapterMap.sort((a, b) => a.spineIndex - b.spineIndex);
 }
 
-function onSliderLeave() {
-    document.getElementById('slider-tooltip').style.display = 'none';
-}
-
-function getChapterFromCfi(cfi) {
-    if (!currentBook || !currentBook.navigation) return '';
-    const toc = currentBook.navigation.toc;
+function getChapterFromLocation(location) {
+    if (!location || !chapterMap.length) return '';
+    // location.start.index is the spine index
+    const spineIdx = location.start.index;
     let match = '';
-    for (const item of flattenToc(toc)) {
-        const itemCfi = currentBook.spine.get(item.href);
-        if (itemCfi) {
-            // Compare spine index
-            const spineItem = currentBook.spine.get(item.href.split('#')[0]);
-            if (spineItem && currentBook.locations) {
-                const itemLoc = currentBook.locations.locationFromCfi(spineItem.cfiBase);
-                const targetLoc = currentBook.locations.locationFromCfi(cfi);
-                if (itemLoc <= targetLoc) {
-                    match = item.label.trim();
-                }
-            }
+    for (const ch of chapterMap) {
+        if (ch.spineIndex <= spineIdx) {
+            match = ch.label;
+        } else {
+            break;
         }
     }
     return match;
+}
+
+function getChapterFromPercent(percent) {
+    if (!currentBook || !currentBook.locations || !chapterMap.length) return '';
+    const cfi = currentBook.locations.cfiFromPercentage(percent);
+    // Extract spine index from cfi: epubcfi(/6/N! ...) → N/2 - 1
+    const match = cfi.match(/^epubcfi\(\/6\/(\d+)/);
+    if (match) {
+        const spineIdx = Math.floor(parseInt(match[1]) / 2) - 1;
+        let label = '';
+        for (const ch of chapterMap) {
+            if (ch.spineIndex <= spineIdx) {
+                label = ch.label;
+            } else {
+                break;
+            }
+        }
+        return label;
+    }
+    return '';
 }
 
 function flattenToc(toc) {
@@ -804,14 +817,49 @@ function flattenToc(toc) {
     return result;
 }
 
-function updateChapterTitle(cfi) {
-    const chapter = getChapterFromCfi(cfi);
+function updateChapterTitle(location) {
+    const chapter = getChapterFromLocation(location);
     const titleBar = document.getElementById('book-title-bar');
     if (chapter) {
         titleBar.textContent = currentBookTitle + '  ·  ' + chapter;
     } else {
         titleBar.textContent = currentBookTitle;
     }
+}
+
+// 进度条悬停时显示章节名
+function onSliderHover(e) {
+    if (!currentBook || !currentBook.locations || !currentBook.locations.length()) return;
+    const slider = e.target;
+    const rect = slider.getBoundingClientRect();
+    const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+
+    const chapterLabel = getChapterFromPercent(percent);
+    const page = Math.round(percent * currentBook.locations.length());
+
+    const tooltip = document.getElementById('slider-tooltip');
+    const text = chapterLabel ? `${chapterLabel}  (${page})` : `${page}`;
+    tooltip.textContent = text;
+    tooltip.style.display = 'block';
+    tooltip.style.left = Math.max(10, e.clientX - tooltip.offsetWidth / 2) + 'px';
+    tooltip.style.top = (rect.top - 36) + 'px';
+}
+
+function onSliderLeave() {
+    document.getElementById('slider-tooltip').style.display = 'none';
+}
+
+// 跳转到指定页数
+function jumpToPage() {
+    if (!currentBook || !currentBook.locations || !currentBook.locations.length()) return;
+    const total = currentBook.locations.length();
+    const input = prompt(t('jumpToPagePrompt') || `Enter page number (1-${total}):`, '');
+    if (input === null) return;
+    const page = parseInt(input);
+    if (isNaN(page) || page < 1 || page > total) return;
+    const percent = (page - 1) / total;
+    const cfi = currentBook.locations.cfiFromPercentage(percent);
+    currentRendition.display(cfi);
 }
 
 // === 返回书架 ===

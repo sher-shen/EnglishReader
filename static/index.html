@@ -6,7 +6,7 @@
     <title>English Reader</title>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
-    <link rel="stylesheet" href="/static/style.css?v=6">
+    <link rel="stylesheet" href="/static/style.css?v=7">
 </head>
 <body>
     <!-- Library -->
@@ -45,7 +45,7 @@
         <div class="reader-topbar">
             <button onclick="backToLibrary()" data-i18n="backToLibrary">← Library</button>
             <span id="book-title-bar"></span>
-            <span id="progress-display"></span>
+            <span id="progress-display" onclick="jumpToPage()" style="cursor:pointer;" title="Click to jump to page"></span>
         </div>
         <div id="reader-container">
             <div id="viewer"></div>
@@ -151,6 +151,6 @@
         </div>
     </div>
 
-    <script src="/static/app.js?v=6"></script>
+    <script src="/static/app.js?v=7"></script>
 </body>
 </html>

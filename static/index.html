@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Reader</title>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Library -->
+    <div id="library-view">
+        <div class="library-header">
+            <h1>My Library</h1>
+            <div class="header-buttons">
+                <button id="notes-btn" onclick="showNotes()">Notes</button>
+                <button id="vocab-btn" onclick="showVocabulary()">Vocabulary</button>
+                <button id="settings-btn" onclick="showSettings()">Settings</button>
+            </div>
+        </div>
+        <!-- Flashcard -->
+        <div id="flashcard" style="display:none;">
+            <div class="flashcard-inner">
+                <div class="flashcard-word" id="flashcard-word"></div>
+                <div class="flashcard-sentence" id="flashcard-sentence"></div>
+                <div class="flashcard-cn" id="flashcard-cn" style="display:none;"></div>
+                <div class="flashcard-actions">
+                    <button onclick="toggleFlashcardCn()">Show Translation</button>
+                    <button onclick="loadFlashcard()">Next Word</button>
+                </div>
+            </div>
+        </div>
+        <div id="book-list">
+            <p class="hint">Place .epub files in the books/ folder, then refresh the page</p>
+        </div>
+    </div>
+
+    <!-- Reader -->
+    <div id="reader-view" style="display:none;">
+        <div class="reader-topbar">
+            <button onclick="backToLibrary()">← Library</button>
+            <span id="book-title-bar"></span>
+            <span id="progress-display"></span>
+        </div>
+        <div id="reader-container">
+            <div id="viewer"></div>
+        </div>
+        <div class="reader-bottombar">
+            <button id="prev-btn" onclick="goPrev()">Prev</button>
+            <input type="range" id="progress-slider" min="0" max="100" value="0"
+                   oninput="onSliderChange(this.value)">
+            <button id="next-btn" onclick="goNext()">Next</button>
+        </div>
+    </div>
+
+    <!-- Highlight Toolbar -->
+    <div id="highlight-toolbar" style="display:none;">
+        <button class="hl-color" data-color="yellow" style="background:#fff3a8;" onclick="addHighlight('yellow')"></button>
+        <button class="hl-color" data-color="green" style="background:#b8f0b8;" onclick="addHighlight('green')"></button>
+        <button class="hl-color" data-color="blue" style="background:#a8d4ff;" onclick="addHighlight('blue')"></button>
+        <button class="hl-color" data-color="pink" style="background:#ffb8d4;" onclick="addHighlight('pink')"></button>
+        <button class="hl-translate-btn" onclick="translateSelection()">Translate</button>
+    </div>
+
+    <!-- Translation Popup -->
+    <div id="popup" style="display:none;">
+        <div class="popup-header">
+            <span id="popup-word" class="popup-word"></span>
+            <button class="popup-close" onclick="hidePopup()">×</button>
+        </div>
+        <div id="popup-translation" class="popup-translation">
+            <div class="loading">Translating...</div>
+        </div>
+        <div class="popup-actions">
+            <button id="save-btn" onclick="saveCurrentWord()">☆ Save</button>
+        </div>
+        <div class="popup-ask">
+            <input type="text" id="ask-input" placeholder="Ask AI a question about this word..."
+                   onkeydown="if(event.key==='Enter')askAI()">
+            <button onclick="askAI()">Send</button>
+        </div>
+        <div id="ask-result" style="display:none;"></div>
+    </div>
+
+    <!-- Vocabulary -->
+    <div id="vocab-view" style="display:none;">
+        <div class="library-header">
+            <button onclick="hideVocabulary()">← Back</button>
+            <h1>Vocabulary</h1>
+            <span id="vocab-count"></span>
+        </div>
+        <div id="vocab-list"></div>
+    </div>
+
+    <!-- Notes -->
+    <div id="notes-view" style="display:none;">
+        <div class="library-header">
+            <button onclick="hideNotes()">← Back</button>
+            <h1>Reading Notes</h1>
+            <div class="header-buttons">
+                <select id="notes-book-filter" onchange="filterNotes()">
+                    <option value="all">All Books</option>
+                </select>
+                <select id="notes-color-filter" onchange="filterNotes()">
+                    <option value="all">All Colors</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="green">Green</option>
+                    <option value="blue">Blue</option>
+                    <option value="pink">Pink</option>
+                </select>
+            </div>
+        </div>
+        <div id="notes-list"></div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" style="display:none;">
+        <div class="settings-content">
+            <div class="settings-header">
+                <h2>Settings</h2>
+                <button class="popup-close" onclick="hideSettings()">×</button>
+            </div>
+            <div class="settings-body">
+                <label>AI CLI Command</label>
+                <input type="text" id="settings-cli" placeholder="claude">
+                <p class="settings-hint">
+                    Default: <code>claude</code>. You can change this to any AI CLI you have installed
+                    (e.g., <code>chatgpt</code>, <code>gemini</code>).
+                </p>
+                <label>Prompt Argument</label>
+                <input type="text" id="settings-args" placeholder="-p">
+                <p class="settings-hint">
+                    The CLI flag for passing a prompt. Claude uses <code>-p</code>.
+                </p>
+                <label>Extra Arguments</label>
+                <input type="text" id="settings-extra" placeholder="--no-input">
+                <p class="settings-hint">
+                    Additional CLI flags, space-separated. Leave empty if not needed.
+                </p>
+            </div>
+            <div class="settings-footer">
+                <button onclick="saveSettings()">Save</button>
+                <button onclick="hideSettings()" style="background:#ccc;color:#333;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

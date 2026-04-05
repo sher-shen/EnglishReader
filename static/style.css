@@ -1,0 +1,670 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #faf9f6;
+    color: #333;
+}
+
+/* === 书架 === */
+.library-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.library-header h1 {
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+#vocab-btn {
+    padding: 8px 20px;
+    background: #5b7a5e;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+#vocab-btn:hover {
+    background: #4a6a4d;
+}
+
+/* === 闪卡 === */
+#flashcard {
+    margin: 0 40px;
+    padding: 20px 0;
+}
+
+.flashcard-inner {
+    background: linear-gradient(135deg, #f0f7f0, #f7f0f7);
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 24px 32px;
+    text-align: center;
+}
+
+.flashcard-word {
+    font-size: 28px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 12px;
+}
+
+.flashcard-sentence {
+    font-size: 16px;
+    color: #444;
+    line-height: 1.6;
+    font-style: italic;
+    margin-bottom: 8px;
+}
+
+.flashcard-cn {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 8px;
+}
+
+.flashcard-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 12px;
+}
+
+.flashcard-actions button {
+    padding: 6px 16px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.flashcard-actions button:hover {
+    background: #f0f0f0;
+}
+
+/* === 设置弹窗 === */
+#settings-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.settings-content {
+    background: #fff;
+    border-radius: 12px;
+    width: 450px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.settings-header h2 {
+    font-size: 18px;
+}
+
+.settings-body {
+    padding: 20px 24px;
+}
+
+.settings-body label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    margin-top: 16px;
+    color: #333;
+}
+
+.settings-body label:first-child {
+    margin-top: 0;
+}
+
+.settings-body input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: monospace;
+}
+
+.settings-body input:focus {
+    outline: none;
+    border-color: #5b7a5e;
+}
+
+.settings-hint {
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+    line-height: 1.5;
+}
+
+.settings-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.settings-footer button {
+    padding: 8px 24px;
+    background: #5b7a5e;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.settings-footer button:hover {
+    opacity: 0.9;
+}
+
+#settings-btn {
+    padding: 8px 20px;
+    background: #f0f0f0;
+    color: #555;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+#settings-btn:hover {
+    background: #e0e0e0;
+}
+
+#book-list {
+    padding: 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 24px;
+}
+
+.book-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 24px;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+    text-align: center;
+}
+
+.book-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.book-card .book-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.book-card .book-name {
+    font-size: 15px;
+    font-weight: 500;
+    word-break: break-word;
+}
+
+.hint {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #999;
+    padding: 60px 0;
+    font-size: 16px;
+}
+
+/* === 阅读器 === */
+.reader-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 14px;
+}
+
+.reader-topbar button {
+    padding: 6px 16px;
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.reader-topbar button:hover {
+    background: #f0f0f0;
+}
+
+#reader-container {
+    height: calc(100vh - 100px);
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+#viewer {
+    width: 100%;
+    height: 100%;
+}
+
+.reader-bottombar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 40px;
+    background: #fff;
+    border-top: 1px solid #e0e0e0;
+}
+
+.reader-bottombar button {
+    padding: 6px 16px;
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.reader-bottombar button:hover {
+    background: #f0f0f0;
+}
+
+#progress-slider {
+    flex: 1;
+    accent-color: #5b7a5e;
+}
+
+#progress-display {
+    color: #888;
+    font-size: 13px;
+}
+
+/* === 翻译弹窗 === */
+#popup {
+    position: fixed;
+    z-index: 1000;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    width: 380px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.popup-word {
+    font-size: 20px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.popup-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: #999;
+    padding: 0 4px;
+}
+
+.popup-close:hover {
+    color: #333;
+}
+
+.popup-translation {
+    padding: 12px 20px;
+    font-size: 14px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    color: #444;
+}
+
+.popup-actions {
+    padding: 4px 20px 8px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.popup-actions button {
+    padding: 6px 16px;
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.popup-actions button:hover {
+    background: #e8e8e8;
+}
+
+.popup-actions button.saved {
+    background: #5b7a5e;
+    color: #fff;
+    border-color: #5b7a5e;
+}
+
+.popup-ask {
+    display: flex;
+    gap: 8px;
+    padding: 8px 20px 12px;
+}
+
+.popup-ask input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+}
+
+.popup-ask input:focus {
+    border-color: #5b7a5e;
+}
+
+.popup-ask button {
+    padding: 8px 16px;
+    background: #5b7a5e;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+#ask-result {
+    padding: 12px 20px 16px;
+    font-size: 14px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    color: #444;
+    border-top: 1px solid #f0f0f0;
+    background: #fafafa;
+    border-radius: 0 0 12px 12px;
+}
+
+.loading {
+    color: #999;
+    font-style: italic;
+}
+
+/* === 生词本 === */
+#vocab-list {
+    padding: 20px 40px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.vocab-item {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.vocab-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.vocab-item-word {
+    font-size: 20px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.vocab-item-translation {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: #f8f8f8;
+    border-radius: 6px;
+    white-space: pre-wrap;
+    line-height: 1.6;
+}
+
+.vocab-occurrence {
+    padding: 10px 12px;
+    margin-top: 8px;
+    background: #fafafa;
+    border-left: 3px solid #5b7a5e;
+    border-radius: 0 6px 6px 0;
+    font-size: 13px;
+}
+
+.vocab-occurrence .sentence {
+    color: #444;
+    font-style: italic;
+    line-height: 1.6;
+}
+
+.vocab-occurrence .meta {
+    color: #999;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.vocab-occurrence .jump-link {
+    color: #5b7a5e;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 12px;
+}
+
+.vocab-occurrence .jump-link:hover {
+    color: #3a5a3d;
+}
+
+.vocab-delete {
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.vocab-delete:hover {
+    color: #e74c3c;
+}
+
+#vocab-count {
+    color: #888;
+    font-size: 14px;
+}
+
+.vocab-empty {
+    text-align: center;
+    color: #999;
+    padding: 60px 0;
+    font-size: 16px;
+}
+
+/* === 高亮工具栏 === */
+#highlight-toolbar {
+    position: fixed;
+    z-index: 999;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    padding: 6px 8px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.hl-color {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    cursor: pointer;
+    padding: 0;
+}
+
+.hl-color:hover {
+    border-color: #888;
+    transform: scale(1.15);
+}
+
+.hl-translate-btn {
+    padding: 4px 12px;
+    background: #5b7a5e;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 4px;
+}
+
+.hl-translate-btn:hover {
+    background: #4a6a4d;
+}
+
+/* === 读书笔记页面 === */
+#notes-list {
+    padding: 20px 40px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.notes-book-section {
+    margin-bottom: 32px;
+}
+
+.notes-book-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.note-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+}
+
+.note-card:hover {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.note-card-highlight {
+    font-size: 15px;
+    line-height: 1.8;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+.note-card-highlight.color-yellow { background: #fff3a8; }
+.note-card-highlight.color-green { background: #b8f0b8; }
+.note-card-highlight.color-blue { background: #a8d4ff; }
+.note-card-highlight.color-pink { background: #ffb8d4; }
+
+.note-card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #999;
+}
+
+.note-card-meta .jump-link {
+    color: #5b7a5e;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.note-card-meta .jump-link:hover {
+    color: #3a5a3d;
+}
+
+.note-delete {
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.note-delete:hover {
+    color: #e74c3c;
+}
+
+#notes-book-filter, #notes-color-filter {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 13px;
+    background: #fff;
+}
+
+.notes-empty {
+    text-align: center;
+    color: #999;
+    padding: 60px 0;
+    font-size: 16px;
+}
+
+.notes-count {
+    color: #888;
+    font-size: 13px;
+    margin-bottom: 16px;
+}

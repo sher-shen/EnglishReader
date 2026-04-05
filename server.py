@@ -25,7 +25,6 @@ DATA_DIR.mkdir(exist_ok=True)
 DEFAULT_CONFIG = {
     'ai_cli': 'claude',
     'ai_args': ['-p'],
-    'ai_extra_args': ['--no-input'],
 }
 
 for f, default in [(VOCAB_FILE, '{}'), (HIGHLIGHTS_FILE, '{}'),
@@ -57,11 +56,10 @@ def call_ai(prompt, timeout=30):
     config = load_config()
     cli = config.get('ai_cli', 'claude')
     args = config.get('ai_args', ['-p'])
-    extra = config.get('ai_extra_args', ['--no-input'])
 
-    cmd = [cli] + args + [prompt] + extra
+    cmd = [cli] + args
 
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    result = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=timeout)
     return result.stdout.strip()
 
 

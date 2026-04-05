@@ -187,7 +187,10 @@ async function openBook(filename, title) {
     }
     document.getElementById('viewer').innerHTML = '';
 
-    currentBook = ePub(`/books/${filename}`);
+    // Fetch as ArrayBuffer for reliable loading
+    const bookResp = await fetch(`/books/${encodeURIComponent(filename)}`);
+    const bookData = await bookResp.arrayBuffer();
+    currentBook = ePub(bookData);
     currentRendition = currentBook.renderTo('viewer', {
         width: '100%',
         height: '100%',
@@ -197,7 +200,11 @@ async function openBook(filename, title) {
     // 读取上次阅读位置
     const savedPosition = localStorage.getItem(`reading-pos-${filename}`);
     if (savedPosition) {
-        currentRendition.display(savedPosition);
+        currentRendition.display(savedPosition).catch(() => {
+            // Saved position invalid, start from beginning
+            localStorage.removeItem(`reading-pos-${filename}`);
+            currentRendition.display();
+        });
     } else {
         currentRendition.display();
     }
@@ -206,10 +213,16 @@ async function openBook(filename, title) {
     currentRendition.on('relocated', (location) => {
         localStorage.setItem(`reading-pos-${filename}`, location.start.cfi);
         if (currentBook.locations && currentBook.locations.length()) {
+            const totalPages = currentBook.locations.length();
+            const currentPage = currentBook.locations.locationFromCfi(location.start.cfi);
             const progress = currentBook.locations.percentageFromCfi(location.start.cfi);
             document.getElementById('progress-slider').value = Math.round(progress * 100);
-            document.getElementById('progress-display').textContent = Math.round(progress * 100) + '%';
+            document.getElementById('progress-display').textContent =
+                `${currentPage} / ${totalPages}  (${Math.round(progress * 100)}%)`;
         }
+
+        // 更新章节标题显示
+        updateChapterTitle(location.start.cfi);
     });
 
     // 生成位置信息
@@ -727,6 +740,77 @@ function onSliderChange(value) {
     if (currentBook && currentBook.locations && currentBook.locations.length()) {
         const cfi = currentBook.locations.cfiFromPercentage(value / 100);
         currentRendition.display(cfi);
+    }
+}
+
+// 进度条悬停时显示章节名
+function onSliderHover(e) {
+    if (!currentBook || !currentBook.locations || !currentBook.locations.length()) return;
+    const slider = e.target;
+    const rect = slider.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+    const cfi = currentBook.locations.cfiFromPercentage(Math.max(0, Math.min(1, percent)));
+
+    let chapterLabel = '';
+    if (currentBook.navigation && currentBook.navigation.toc) {
+        chapterLabel = getChapterFromCfi(cfi);
+    }
+
+    const tooltip = document.getElementById('slider-tooltip');
+    if (chapterLabel) {
+        const page = Math.round(percent * currentBook.locations.length());
+        tooltip.textContent = chapterLabel + ' (' + page + ')';
+        tooltip.style.display = 'block';
+        tooltip.style.left = (e.clientX - tooltip.offsetWidth / 2) + 'px';
+        tooltip.style.top = (rect.top - 32) + 'px';
+    } else {
+        tooltip.style.display = 'none';
+    }
+}
+
+function onSliderLeave() {
+    document.getElementById('slider-tooltip').style.display = 'none';
+}
+
+function getChapterFromCfi(cfi) {
+    if (!currentBook || !currentBook.navigation) return '';
+    const toc = currentBook.navigation.toc;
+    let match = '';
+    for (const item of flattenToc(toc)) {
+        const itemCfi = currentBook.spine.get(item.href);
+        if (itemCfi) {
+            // Compare spine index
+            const spineItem = currentBook.spine.get(item.href.split('#')[0]);
+            if (spineItem && currentBook.locations) {
+                const itemLoc = currentBook.locations.locationFromCfi(spineItem.cfiBase);
+                const targetLoc = currentBook.locations.locationFromCfi(cfi);
+                if (itemLoc <= targetLoc) {
+                    match = item.label.trim();
+                }
+            }
+        }
+    }
+    return match;
+}
+
+function flattenToc(toc) {
+    let result = [];
+    for (const item of toc) {
+        result.push(item);
+        if (item.subitems && item.subitems.length) {
+            result = result.concat(flattenToc(item.subitems));
+        }
+    }
+    return result;
+}
+
+function updateChapterTitle(cfi) {
+    const chapter = getChapterFromCfi(cfi);
+    const titleBar = document.getElementById('book-title-bar');
+    if (chapter) {
+        titleBar.textContent = currentBookTitle + '  ·  ' + chapter;
+    } else {
+        titleBar.textContent = currentBookTitle;
     }
 }
 

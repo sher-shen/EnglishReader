@@ -349,6 +349,9 @@ function applyHighlightsToRendition() {
 
 function showHighlightToolbar(x, y) {
     const toolbar = document.getElementById('highlight-toolbar');
+    // Reset save button
+    const saveBtn = toolbar.querySelector('.hl-save-btn');
+    if (saveBtn) { saveBtn.textContent = '☆'; saveBtn.classList.remove('saved'); }
     toolbar.style.display = 'flex';
     toolbar.style.left = (x - 80) + 'px';
     toolbar.style.top = (y - 45) + 'px';
@@ -412,6 +415,48 @@ function translateSelection() {
                   selectionState.pageX, selectionState.pageY);
         translateWord(selectionState.text, selectionState.sentence);
     }
+}
+
+async function saveSelection() {
+    if (!selectionState.text) return;
+    const btn = document.querySelector('.hl-save-btn');
+
+    let cfi = '';
+    if (currentRendition && currentRendition.location) {
+        cfi = currentRendition.location.start.cfi;
+    }
+
+    try {
+        // First get translation
+        const transResp = await fetch('/api/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ word: selectionState.text, sentence: selectionState.sentence })
+        });
+        const transData = await transResp.json();
+
+        // Save with translation
+        await fetch('/api/vocabulary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                word: selectionState.text,
+                sentence: selectionState.sentence,
+                translation: transData.result || '',
+                book_title: currentBookTitle,
+                cfi: cfi
+            })
+        });
+
+        if (btn) {
+            btn.textContent = '★';
+            btn.classList.add('saved');
+        }
+    } catch (e) {
+        if (btn) btn.textContent = '!';
+    }
+
+    hideHighlightToolbar();
 }
 
 // 点击其他地方关闭高亮工具栏
@@ -630,6 +675,7 @@ function showPopup(word, sentence, x, y) {
     }
 
     popup.style.display = 'block';
+    popupOpenTime = Date.now();
     const popupRect = popup.getBoundingClientRect();
     let left = x - popupRect.width / 2;
     let top = y + 20;
@@ -646,18 +692,20 @@ function showPopup(word, sentence, x, y) {
     popup.style.top = top + 'px';
 }
 
+let popupOpenTime = 0;
+
 function hidePopup() {
     document.getElementById('popup').style.display = 'none';
 }
 
-document.addEventListener('click', (e) => {
+// Only close popup when clicking outside, with protection period
+document.addEventListener('mousedown', (e) => {
     const popup = document.getElementById('popup');
-    if (popup.style.display !== 'none' && !popup.contains(e.target)) {
-        setTimeout(() => {
-            if (!popup.matches(':hover')) {
-                hidePopup();
-            }
-        }, 100);
+    if (popup.style.display === 'none') return;
+    // Don't close within 500ms of opening (prevents flash-close)
+    if (Date.now() - popupOpenTime < 500) return;
+    if (!popup.contains(e.target)) {
+        hidePopup();
     }
 });
 

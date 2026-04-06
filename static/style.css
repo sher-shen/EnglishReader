@@ -600,6 +600,26 @@ body {
     background: #4a6a4d;
 }
 
+.hl-save-btn {
+    padding: 4px 10px;
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 2px;
+}
+
+.hl-save-btn:hover {
+    background: #e8e8e8;
+}
+
+.hl-save-btn.saved {
+    background: #5b7a5e;
+    color: #fff;
+    border-color: #5b7a5e;
+}
+
 /* === 读书笔记页面 === */
 #notes-list {
     padding: 20px 40px;

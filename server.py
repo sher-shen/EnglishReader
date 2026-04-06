@@ -402,23 +402,28 @@ def translate():
         except Exception as e:
             return jsonify({'result': f'AI error: {str(e)}'}), 500
 
-    # 单词查询 → 先用免费词典 API（快且免费）
-    dict_result = lookup_dictionary(word)
-    if dict_result:
-        return jsonify({'result': dict_result, 'source': 'dictionary'})
+    # 判断是单词还是短语/句子
+    is_phrase = ' ' in word.strip()
 
-    # 词典没查到（可能是短语或生僻词）→ 用 AI
-    prompt = (
-        f"用户正在阅读英文原著，点击了一个不认识的词/短语。请给出翻译。\n\n"
-        f"单词/短语：{word}\n"
-        f"所在句子：{sentence}\n\n"
-        f"请按以下格式简洁回答：\n"
-        f"【释义】中文意思\n"
-        f"【句中含义】在这个句子中具体是什么意思"
-    )
+    if not is_phrase:
+        # 单词 → 免费词典 API
+        dict_result = lookup_dictionary(word)
+        if dict_result:
+            return jsonify({'result': dict_result, 'source': 'dictionary'})
+
+    # 短语/句子/词典没查到 → 免费翻译 API
+    cn = translate_to_chinese(word)
+    if cn:
+        result = f"{word.strip()}\n【中文】{cn}"
+        return jsonify({'result': result, 'source': 'translate'})
+
+    # 翻译 API 也失败 → 最后用 AI
     try:
+        prompt = (
+            f"请翻译以下英文内容为中文，只给出翻译结果：\n\n{word}"
+        )
         result = call_ai(prompt)
-        return jsonify({'result': result, 'source': 'ai'})
+        return jsonify({'result': f"{word.strip()}\n【中文】{result}", 'source': 'ai'})
     except Exception as e:
         return jsonify({'result': f'Translation failed: {str(e)}'}), 500
 

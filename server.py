@@ -519,12 +519,20 @@ def save_word():
     if word not in vocab:
         vocab[word] = {'translation': translation, 'occurrences': []}
 
-    vocab[word]['occurrences'].append({
-        'sentence': sentence,
-        'book': book_title,
-        'cfi': cfi,
-        'date': time.strftime('%Y-%m-%d %H:%M')
-    })
+    # Dedup: don't add if same book + same cfi already exists
+    existing = vocab[word]['occurrences']
+    is_dup = any(
+        o.get('book') == book_title and o.get('cfi') == cfi
+        for o in existing
+    ) if cfi else False
+
+    if not is_dup:
+        existing.append({
+            'sentence': sentence,
+            'book': book_title,
+            'cfi': cfi,
+            'date': time.strftime('%Y-%m-%d %H:%M')
+        })
 
     if translation:
         vocab[word]['translation'] = translation

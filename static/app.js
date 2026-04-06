@@ -338,22 +338,34 @@ async function loadAndApplyHighlights(filename) {
 }
 
 // === 生词标记 ===
-let vocabWords = new Set();
+let vocabSingleWords = new Set(); // single words
+let vocabPhrases = [];             // multi-word phrases
 
 async function loadVocabWords() {
     try {
         const resp = await fetch('/api/vocabulary');
         const vocab = await resp.json();
-        vocabWords = new Set(Object.keys(vocab));
+        vocabSingleWords = new Set();
+        vocabPhrases = [];
+        for (const key of Object.keys(vocab)) {
+            if (key.includes(' ')) {
+                vocabPhrases.push(key);
+            } else {
+                vocabSingleWords.add(key);
+            }
+        }
+        // Sort phrases by length (longest first) for greedy matching
+        vocabPhrases.sort((a, b) => b.length - a.length);
     } catch (e) {
-        vocabWords = new Set();
+        vocabSingleWords = new Set();
+        vocabPhrases = [];
     }
 }
 
 function markVocabWords(doc) {
-    if (!vocabWords.size) return;
+    if (!vocabSingleWords.size && !vocabPhrases.length) return;
 
-    // Inject style for vocab marking
+    // Inject style
     let style = doc.getElementById('vocab-mark-style');
     if (!style) {
         style = doc.createElement('style');
@@ -367,7 +379,28 @@ function markVocabWords(doc) {
         }
     `;
 
-    // Walk all text nodes and wrap vocab words
+    // Mark phrases first (in paragraph-level text)
+    if (vocabPhrases.length) {
+        const paragraphs = doc.querySelectorAll('p, div, li, td, h1, h2, h3, h4, h5, h6');
+        for (const para of paragraphs) {
+            if (para.querySelector('.vocab-mark')) continue;
+            const html = para.innerHTML;
+            let newHtml = html;
+            for (const phrase of vocabPhrases) {
+                // Case-insensitive match, word boundary
+                const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`\\b(${escaped})\\b`, 'gi');
+                newHtml = newHtml.replace(regex, '<span class="vocab-mark">$1</span>');
+            }
+            if (newHtml !== html) {
+                para.innerHTML = newHtml;
+            }
+        }
+    }
+
+    // Mark single words via text node walking
+    if (!vocabSingleWords.size) return;
+
     const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null);
     const textNodes = [];
     while (walker.nextNode()) {
@@ -388,13 +421,11 @@ function markVocabWords(doc) {
 
         text.replace(wordPattern, (match, offset) => {
             const lower = match.toLowerCase().replace(/^['-]+|['-]+$/g, '');
-            if (vocabWords.has(lower)) {
+            if (vocabSingleWords.has(lower)) {
                 hasMatch = true;
-                // Text before the match
                 if (offset > lastIndex) {
                     fragments.push(doc.createTextNode(text.slice(lastIndex, offset)));
                 }
-                // The matched word wrapped in span
                 const span = doc.createElement('span');
                 span.className = 'vocab-mark';
                 span.textContent = match;
@@ -404,7 +435,6 @@ function markVocabWords(doc) {
         });
 
         if (hasMatch) {
-            // Remaining text
             if (lastIndex < text.length) {
                 fragments.push(doc.createTextNode(text.slice(lastIndex)));
             }

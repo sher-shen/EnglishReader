@@ -448,10 +448,10 @@ function markVocabWords(doc) {
 // After saving a word, refresh markings
 async function refreshVocabMarks() {
     await loadVocabWords();
-    // Re-mark in current page by re-rendering
-    if (currentRendition && currentRendition.location) {
-        const cfi = currentRendition.location.start.cfi;
-        currentRendition.display(cfi);
+    // Directly mark in current iframe without re-rendering
+    const iframe = document.querySelector('#viewer iframe');
+    if (iframe && iframe.contentDocument) {
+        markVocabWords(iframe.contentDocument);
     }
 }
 

@@ -809,17 +809,34 @@ function showPopup(word, sentence, x, y) {
     }
 
     popup.style.display = 'block';
+    popup.style.maxHeight = '';
     popupOpenTime = Date.now();
     const popupRect = popup.getBoundingClientRect();
     let left = x - popupRect.width / 2;
     let top = y + 20;
 
+    // Keep within horizontal bounds
     if (left < 10) left = 10;
     if (left + popupRect.width > window.innerWidth - 10) {
         left = window.innerWidth - popupRect.width - 10;
     }
-    if (top + popupRect.height > window.innerHeight - 10) {
-        top = y - popupRect.height - 10;
+
+    // If not enough space below, show above the word
+    const spaceBelow = window.innerHeight - y - 20;
+    const spaceAbove = y - 20;
+
+    if (popupRect.height > spaceBelow) {
+        if (spaceAbove > spaceBelow) {
+            // Show above, limit height if needed
+            const maxH = Math.min(spaceAbove - 10, 400);
+            popup.style.maxHeight = maxH + 'px';
+            top = Math.max(10, y - Math.min(popupRect.height, maxH) - 10);
+        } else {
+            // Show below but limit height to fit
+            const maxH = Math.max(spaceBelow - 10, 150);
+            popup.style.maxHeight = maxH + 'px';
+            top = y + 20;
+        }
     }
 
     popup.style.left = left + 'px';

@@ -302,7 +302,27 @@ def analyze_morphology(word):
 # === 免费翻译 API ===
 
 def translate_to_chinese(text):
-    """用 MyMemory 免费翻译 API 获取中文翻译"""
+    """用 Google Translate 免费接口获取中文翻译"""
+    try:
+        encoded = urllib.parse.quote(text[:500])
+        url = (
+            f"https://translate.googleapis.com/translate_a/single"
+            f"?client=gtx&sl=en&tl=zh-CN&dt=t&q={encoded}"
+        )
+        req = urllib.request.Request(url, headers={
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'
+        })
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode())
+        # Response format: [[["translated","original",...],...],...]
+        if data and data[0]:
+            translated = ''.join(part[0] for part in data[0] if part[0])
+            if translated and translated != text:
+                return translated
+    except Exception:
+        pass
+
+    # Fallback to MyMemory
     try:
         params = urllib.parse.urlencode({
             'q': text[:500],

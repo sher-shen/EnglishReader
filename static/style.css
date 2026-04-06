@@ -40,24 +40,92 @@ body {
     cursor: pointer;
 }
 
-#vocab-btn {
-    padding: 8px 20px;
+.header-btn {
+    padding: 8px 16px;
     background: #5b7a5e;
     color: #fff;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.2s;
 }
 
-#vocab-btn:hover {
+.header-btn:hover {
     background: #4a6a4d;
 }
 
+.header-btn.btn-subtle {
+    background: #f0f0f0;
+    color: #555;
+    border: 1px solid #ddd;
+}
+
+.header-btn.btn-subtle:hover {
+    background: #e0e0e0;
+}
+
+.btn-icon {
+    font-size: 14px;
+}
+
+#library-title {
+    cursor: default;
+    user-select: none;
+}
+
+#library-title:hover {
+    opacity: 0.7;
+}
+
+.back-btn {
+    padding: 6px 14px;
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.back-btn:hover {
+    background: #f0f0f0;
+}
+
 /* === 闪卡 === */
-#flashcard {
+#flashcard-wrapper {
     margin: 0 40px;
-    padding: 20px 0;
+}
+
+#flashcard-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+    color: #888;
+    font-size: 13px;
+    border-bottom: 1px solid #eee;
+    user-select: none;
+}
+
+#flashcard-toggle:hover {
+    color: #555;
+}
+
+#flashcard-arrow {
+    font-size: 10px;
+    transition: transform 0.2s;
+}
+
+#flashcard-arrow.open {
+    transform: rotate(180deg);
+}
+
+#flashcard {
+    padding: 12px 0 20px;
 }
 
 .flashcard-inner {
@@ -697,13 +765,61 @@ body {
     color: #e74c3c;
 }
 
-#notes-book-filter, #notes-color-filter {
+.notes-filters {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.filter-select {
     padding: 6px 12px;
     border: 1px solid #ddd;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 13px;
     background: #fff;
 }
+
+.color-filter-pills {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.color-pill {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    cursor: pointer;
+    padding: 0;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s, border-color 0.15s;
+}
+
+.color-pill:hover {
+    transform: scale(1.15);
+}
+
+.color-pill.active {
+    border-color: #333;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
+}
+
+.color-pill[data-color="all"] {
+    width: auto;
+    border-radius: 12px;
+    padding: 4px 10px;
+    background: #f0f0f0;
+    font-size: 11px;
+}
+
+.pill-yellow { background: #fff3a8; }
+.pill-green { background: #b8f0b8; }
+.pill-blue { background: #a8d4ff; }
+.pill-pink { background: #ffb8d4; }
 
 .notes-empty {
     text-align: center;

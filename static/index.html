@@ -6,32 +6,38 @@
     <title>English Reader</title>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
-    <link rel="stylesheet" href="/static/style.css?v=11">
+    <link rel="stylesheet" href="/static/style.css?v=12">
 </head>
 <body>
     <!-- Library -->
     <div id="library-view">
         <div class="library-header">
-            <h1 data-i18n="myLibrary">My Library</h1>
+            <h1 id="library-title" ondblclick="editLibraryTitle()">My Library</h1>
             <div class="header-buttons">
                 <select id="lang-select" onchange="switchLang(this.value)" class="lang-select">
                     <option value="en">English</option>
                     <option value="zh">中文</option>
                 </select>
-                <button id="notes-btn" onclick="showNotes()" data-i18n="notes">Notes</button>
-                <button id="vocab-btn" onclick="showVocabulary()" data-i18n="vocabulary">Vocabulary</button>
-                <button id="settings-btn" onclick="showSettings()" data-i18n="settings">Settings</button>
+                <button class="header-btn" onclick="showNotes()"><span class="btn-icon">&#128221;</span> <span data-i18n="notes">Notes</span></button>
+                <button class="header-btn" onclick="showVocabulary()"><span class="btn-icon">&#128218;</span> <span data-i18n="vocabulary">Vocabulary</span></button>
+                <button class="header-btn btn-subtle" onclick="showSettings()"><span class="btn-icon">&#9881;</span> <span data-i18n="settings">Settings</span></button>
             </div>
         </div>
-        <!-- Flashcard -->
-        <div id="flashcard" style="display:none;">
-            <div class="flashcard-inner">
-                <div class="flashcard-word" id="flashcard-word"></div>
-                <div class="flashcard-sentence" id="flashcard-sentence"></div>
-                <div class="flashcard-cn" id="flashcard-cn" style="display:none;"></div>
-                <div class="flashcard-actions">
-                    <button onclick="toggleFlashcardCn()" data-i18n="showTranslation">Show Translation</button>
-                    <button onclick="loadFlashcard()" data-i18n="nextWord">Next Word</button>
+        <!-- Flashcard (collapsible) -->
+        <div id="flashcard-wrapper">
+            <div id="flashcard-toggle" onclick="toggleFlashcard()">
+                <span data-i18n="wordOfTheDay">Word of the Day</span>
+                <span id="flashcard-arrow">&#9660;</span>
+            </div>
+            <div id="flashcard" style="display:none;">
+                <div class="flashcard-inner">
+                    <div class="flashcard-word" id="flashcard-word"></div>
+                    <div class="flashcard-sentence" id="flashcard-sentence"></div>
+                    <div class="flashcard-cn" id="flashcard-cn" style="display:none;"></div>
+                    <div class="flashcard-actions">
+                        <button onclick="toggleFlashcardCn()" data-i18n="showTranslation">Show Translation</button>
+                        <button onclick="loadFlashcard()" data-i18n="nextWord">Next Word</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -106,19 +112,19 @@
     <!-- Notes -->
     <div id="notes-view" style="display:none;">
         <div class="library-header">
-            <button onclick="hideNotes()" data-i18n="back">← Back</button>
+            <button class="back-btn" onclick="hideNotes()">←</button>
             <h1 data-i18n="readingNotes">Reading Notes</h1>
-            <div class="header-buttons">
-                <select id="notes-book-filter" onchange="filterNotes()">
+            <div class="notes-filters">
+                <select id="notes-book-filter" onchange="filterNotes()" class="filter-select">
                     <option value="all" data-i18n="allBooks">All Books</option>
                 </select>
-                <select id="notes-color-filter" onchange="filterNotes()">
-                    <option value="all" data-i18n="allColors">All Colors</option>
-                    <option value="yellow" data-i18n="yellow">Yellow</option>
-                    <option value="green" data-i18n="green">Green</option>
-                    <option value="blue" data-i18n="blue">Blue</option>
-                    <option value="pink" data-i18n="pink">Pink</option>
-                </select>
+                <div class="color-filter-pills">
+                    <button class="color-pill active" data-color="all" onclick="filterByColor('all')"><span data-i18n="allColors">All</span></button>
+                    <button class="color-pill pill-yellow" data-color="yellow" onclick="filterByColor('yellow')"></button>
+                    <button class="color-pill pill-green" data-color="green" onclick="filterByColor('green')"></button>
+                    <button class="color-pill pill-blue" data-color="blue" onclick="filterByColor('blue')"></button>
+                    <button class="color-pill pill-pink" data-color="pink" onclick="filterByColor('pink')"></button>
+                </div>
             </div>
         </div>
         <div id="notes-list"></div>
@@ -151,6 +157,6 @@
         </div>
     </div>
 
-    <script src="/static/app.js?v=11"></script>
+    <script src="/static/app.js?v=12"></script>
 </body>
 </html>

@@ -51,6 +51,8 @@ const LANG = {
         generatingExample: 'Generating example...',
         langLabel: 'Language',
         jumpToPagePrompt: 'Enter page number:',
+        wordOfTheDay: 'Word of the Day',
+        editTitlePrompt: 'Enter library name:',
     },
     zh: {
         myLibrary: '我的书架',
@@ -98,6 +100,8 @@ const LANG = {
         extraArgs: '额外参数',
         extraArgsHint: '其他需要的参数，多个用空格分隔。可留空。',
         jumpToPagePrompt: '输入页码：',
+        wordOfTheDay: '每日一词',
+        editTitlePrompt: '输入书架名称：',
         saveBtn: '保存',
         cancel: '取消',
         settingsSaved: '设置已保存',
@@ -588,7 +592,7 @@ async function showNotes() {
 function filterNotes() {
     fetch('/api/highlights').then(r => r.json()).then(allHighlights => {
         const bookFilter = document.getElementById('notes-book-filter').value;
-        const colorFilter = document.getElementById('notes-color-filter').value;
+        const colorFilter = (document.getElementById('notes-view').dataset.colorFilter) || 'all';
 
         // 按书籍筛选
         let filtered = {};
@@ -1195,7 +1199,61 @@ document.getElementById('settings-modal').addEventListener('click', (e) => {
     }
 });
 
+// === Library title editing ===
+function editLibraryTitle() {
+    const el = document.getElementById('library-title');
+    const current = localStorage.getItem('library-title') || t('myLibrary');
+    const newTitle = prompt(t('editTitlePrompt') || 'Enter library name:', current);
+    if (newTitle !== null && newTitle.trim()) {
+        localStorage.setItem('library-title', newTitle.trim());
+        el.textContent = newTitle.trim();
+    }
+}
+
+function loadLibraryTitle() {
+    const saved = localStorage.getItem('library-title');
+    if (saved) {
+        document.getElementById('library-title').textContent = saved;
+    }
+}
+
+// === Flashcard toggle ===
+function toggleFlashcard() {
+    const card = document.getElementById('flashcard');
+    const arrow = document.getElementById('flashcard-arrow');
+    const isOpen = card.style.display !== 'none';
+    card.style.display = isOpen ? 'none' : 'block';
+    arrow.classList.toggle('open', !isOpen);
+    localStorage.setItem('flashcard-open', !isOpen);
+}
+
+function restoreFlashcardState() {
+    const isOpen = localStorage.getItem('flashcard-open') !== 'false';
+    const card = document.getElementById('flashcard');
+    const arrow = document.getElementById('flashcard-arrow');
+    if (card && isOpen) {
+        card.style.display = 'block';
+        arrow.classList.add('open');
+    }
+}
+
+// === Notes color filter (pill buttons) ===
+function filterByColor(color) {
+    // Update active pill
+    document.querySelectorAll('.color-pill').forEach(p => {
+        p.classList.toggle('active', p.dataset.color === color);
+    });
+    // Store and re-filter
+    document.getElementById('notes-view').dataset.colorFilter = color;
+    filterNotes();
+}
+
+// Override filterNotes to use pill buttons
+const _originalFilterNotes = typeof filterNotes === 'function' ? filterNotes : null;
+
 // === 启动 ===
 applyLang();
+loadLibraryTitle();
 loadLibrary();
 loadFlashcard();
+restoreFlashcardState();

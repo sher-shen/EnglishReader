@@ -273,7 +273,7 @@ async function openBook(filename, title) {
             }
         });
 
-        // 选中文本 → 显示高亮工具栏
+        // 选中文本 → 自动翻译 + 显示高亮工具栏
         doc.addEventListener('mouseup', (e) => {
             const selection = doc.getSelection();
             const text = selection ? selection.toString().trim() : '';
@@ -299,7 +299,12 @@ async function openBook(filename, title) {
                     pageY: pageY
                 };
 
-                showHighlightToolbar(pageX, pageY);
+                // 自动弹出翻译（和点单词一样）
+                showPopup(text, sentence, pageX, pageY);
+                translateWord(text, sentence);
+
+                // 同时显示高亮工具栏（在翻译弹窗上方）
+                showHighlightToolbar(pageX, pageY - 60);
             }
         });
     });

@@ -59,6 +59,10 @@ const LANG = {
         jumpToPagePrompt: 'Enter page number:',
         wordOfTheDay: 'Word of the Day',
         editTitlePrompt: 'Enter library name:',
+        qaHistory: 'Q&A History',
+        noQA: 'No Q&A yet. Ask AI a question while reading.',
+        deleteQAConfirm: 'Delete this Q&A?',
+        items: 'items',
     },
     zh: {
         myLibrary: '我的书架',
@@ -116,6 +120,10 @@ const LANG = {
         jumpToPagePrompt: '输入页码：',
         wordOfTheDay: '每日一词',
         editTitlePrompt: '输入书架名称：',
+        qaHistory: '问答记录',
+        noQA: '还没有问答记录，阅读时向 AI 提问即可。',
+        deleteQAConfirm: '删除这条问答？',
+        items: '条',
         saveBtn: '保存',
         cancel: '取消',
         settingsSaved: '设置已保存',
@@ -908,7 +916,8 @@ async function askAI() {
             body: JSON.stringify({
                 word: popupState.word,
                 sentence: popupState.sentence,
-                question: question
+                question: question,
+                book_title: currentBookTitle
             })
         });
         const data = await resp.json();
@@ -1266,6 +1275,52 @@ document.getElementById('settings-modal').addEventListener('click', (e) => {
         hideSettings();
     }
 });
+
+// === Q&A History ===
+async function showQAHistory() {
+    document.getElementById('library-view').style.display = 'none';
+    document.getElementById('qa-view').style.display = 'block';
+
+    const resp = await fetch('/api/qa');
+    const qaList = await resp.json();
+
+    document.getElementById('qa-count').textContent = `${qaList.length} ${t('items') || 'items'}`;
+
+    if (qaList.length === 0) {
+        document.getElementById('qa-list').innerHTML =
+            `<p class="vocab-empty">${t('noQA') || 'No Q&A yet. Ask AI a question while reading.'}</p>`;
+        return;
+    }
+
+    // Show newest first
+    const reversed = [...qaList].reverse();
+    document.getElementById('qa-list').innerHTML = reversed.map((qa, i) => {
+        const realIndex = qaList.length - 1 - i;
+        return `
+        <div class="qa-card">
+            <div class="qa-context">
+                <span class="qa-word">${escapeHtml(qa.word)}</span>
+                ${qa.book ? `<span class="qa-book">📚 ${escapeHtml(qa.book)}</span>` : ''}
+                <span class="qa-date">${qa.date}</span>
+            </div>
+            ${qa.sentence ? `<div class="qa-sentence">"${escapeHtml(qa.sentence)}"</div>` : ''}
+            <div class="qa-question">Q: ${escapeHtml(qa.question)}</div>
+            <div class="qa-answer">${escapeHtml(qa.answer)}</div>
+            <button class="note-delete" onclick="deleteQA(${realIndex})" title="Delete">×</button>
+        </div>`;
+    }).join('');
+}
+
+function hideQAHistory() {
+    document.getElementById('qa-view').style.display = 'none';
+    document.getElementById('library-view').style.display = 'block';
+}
+
+async function deleteQA(index) {
+    if (!confirm(t('deleteQAConfirm') || 'Delete this Q&A?')) return;
+    await fetch(`/api/qa/${index}`, { method: 'DELETE' });
+    showQAHistory();
+}
 
 // === Library title editing ===
 function editLibraryTitle() {

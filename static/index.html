@@ -6,7 +6,7 @@
     <title>English Reader</title>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
-    <link rel="stylesheet" href="/static/style.css?v=16">
+    <link rel="stylesheet" href="/static/style.css?v=17">
 </head>
 <body>
     <!-- Library -->
@@ -20,6 +20,7 @@
                 </select>
                 <button class="header-btn" onclick="showNotes()"><span class="btn-icon">&#128221;</span> <span data-i18n="notes">Notes</span></button>
                 <button class="header-btn" onclick="showVocabulary()"><span class="btn-icon">&#128218;</span> <span data-i18n="vocabulary">Vocabulary</span></button>
+                <button class="header-btn" onclick="showQAHistory()"><span class="btn-icon">&#128172;</span> <span data-i18n="qaHistory">Q&amp;A</span></button>
                 <button class="header-btn btn-subtle" onclick="showSettings()"><span class="btn-icon">&#9881;</span> <span data-i18n="settings">Settings</span></button>
             </div>
         </div>
@@ -130,6 +131,16 @@
         <div id="notes-list"></div>
     </div>
 
+    <!-- Q&A History -->
+    <div id="qa-view" style="display:none;">
+        <div class="library-header">
+            <button class="back-btn" onclick="hideQAHistory()">←</button>
+            <h1 data-i18n="qaHistory">Q&A History</h1>
+            <span id="qa-count"></span>
+        </div>
+        <div id="qa-list"></div>
+    </div>
+
     <!-- Settings Modal -->
     <div id="settings-modal" style="display:none;">
         <div class="settings-content">
@@ -195,6 +206,6 @@
         </div>
     </div>
 
-    <script src="/static/app.js?v=16"></script>
+    <script src="/static/app.js?v=17"></script>
 </body>
 </html>

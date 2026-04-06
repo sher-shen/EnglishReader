@@ -20,6 +20,7 @@ VOCAB_FILE = DATA_DIR / 'vocabulary.json'
 HIGHLIGHTS_FILE = DATA_DIR / 'highlights.json'
 CONFIG_FILE = DATA_DIR / 'config.json'
 FLASHCARD_CACHE_FILE = DATA_DIR / 'flashcard_cache.json'
+QA_FILE = DATA_DIR / 'qa_history.json'
 
 BOOKS_DIR.mkdir(exist_ok=True)
 DATA_DIR.mkdir(exist_ok=True)
@@ -36,7 +37,7 @@ DEFAULT_CONFIG = {
 }
 
 for f, default in [(VOCAB_FILE, '{}'), (HIGHLIGHTS_FILE, '{}'),
-                    (FLASHCARD_CACHE_FILE, '{}')]:
+                    (FLASHCARD_CACHE_FILE, '{}'), (QA_FILE, '[]')]:
     if not f.exists():
         f.write_text(default, encoding='utf-8')
 
@@ -433,6 +434,17 @@ def translate():
         )
         try:
             result = call_ai(prompt)
+            # Save Q&A to history
+            qa_list = load_json(QA_FILE)
+            qa_list.append({
+                'word': word,
+                'sentence': sentence,
+                'question': question,
+                'answer': result,
+                'book': request.json.get('book_title', ''),
+                'date': time.strftime('%Y-%m-%d %H:%M')
+            })
+            save_json(QA_FILE, qa_list)
             return jsonify({'result': result})
         except Exception as e:
             return jsonify({'result': f'AI error: {str(e)}'}), 500
@@ -649,6 +661,22 @@ def delete_highlight(book_filename, highlight_id):
 @app.route('/api/highlights', methods=['GET'])
 def get_all_highlights():
     return jsonify(load_json(HIGHLIGHTS_FILE))
+
+
+# === Q&A 历史 ===
+
+@app.route('/api/qa', methods=['GET'])
+def get_qa_history():
+    return jsonify(load_json(QA_FILE))
+
+
+@app.route('/api/qa/<int:index>', methods=['DELETE'])
+def delete_qa(index):
+    qa_list = load_json(QA_FILE)
+    if 0 <= index < len(qa_list):
+        qa_list.pop(index)
+        save_json(QA_FILE, qa_list)
+    return jsonify({'success': True})
 
 
 if __name__ == '__main__':

@@ -831,35 +831,39 @@ function showPopup(word, sentence, x, y) {
     }
 
     popup.style.display = 'block';
-    popup.style.maxHeight = '';
     popupOpenTime = Date.now();
-    const popupRect = popup.getBoundingClientRect();
-    let left = x - popupRect.width / 2;
-    let top = y + 20;
 
-    // Keep within horizontal bounds
-    if (left < 10) left = 10;
-    if (left + popupRect.width > window.innerWidth - 10) {
-        left = window.innerWidth - popupRect.width - 10;
-    }
-
-    // If not enough space below, show above the word
+    const popupWidth = 340;
+    const margin = 10;
     const spaceBelow = window.innerHeight - y - 20;
     const spaceAbove = y - 20;
 
-    if (popupRect.height > spaceBelow) {
-        if (spaceAbove > spaceBelow) {
-            // Show above, limit height if needed
-            const maxH = Math.min(spaceAbove - 10, 400);
-            popup.style.maxHeight = maxH + 'px';
-            top = Math.max(10, y - Math.min(popupRect.height, maxH) - 10);
-        } else {
-            // Show below but limit height to fit
-            const maxH = Math.max(spaceBelow - 10, 150);
-            popup.style.maxHeight = maxH + 'px';
-            top = y + 20;
-        }
+    // Horizontal: center on click, keep in bounds
+    let left = x - popupWidth / 2;
+    if (left < margin) left = margin;
+    if (left + popupWidth > window.innerWidth - margin) {
+        left = window.innerWidth - popupWidth - margin;
     }
+
+    let top;
+    let maxH;
+
+    if (spaceBelow >= 200) {
+        // Enough room below
+        top = y + 20;
+        maxH = spaceBelow - margin;
+    } else if (spaceAbove >= 200) {
+        // Show above
+        maxH = spaceAbove - margin;
+        top = Math.max(margin, y - Math.min(maxH, 400) - 10);
+    } else {
+        // Very little space either way — just pin to top of screen
+        top = margin;
+        maxH = window.innerHeight - margin * 2;
+    }
+
+    popup.style.maxHeight = Math.min(maxH, 400) + 'px';
+    popup.style.overflowY = 'auto';
 
     popup.style.left = left + 'px';
     popup.style.top = top + 'px';

@@ -60,15 +60,24 @@ def load_config():
         return DEFAULT_CONFIG
 
 
-def call_ai(prompt, timeout=30):
+def call_ai(prompt, timeout=60):
     """调用配置的 AI CLI"""
     config = load_config()
     cli = config.get('ai_cli', 'claude')
     args = config.get('ai_args', ['-p'])
 
-    cmd = [cli] + args
+    # Some CLIs take prompt as argument (gemini -p "prompt"),
+    # others read from stdin (claude -p < stdin).
+    # Try argument first, fall back to stdin if that fails.
+    if cli in ('gemini', 'gemini-cli'):
+        # Gemini: -p takes prompt as next argument
+        cmd = [cli] + args + [prompt]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    else:
+        # Claude and others: pipe prompt via stdin
+        cmd = [cli] + args
+        result = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=timeout)
 
-    result = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=timeout)
     return result.stdout.strip()
 
 

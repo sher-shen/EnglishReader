@@ -6,7 +6,7 @@
     <title>English Reader</title>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
-    <link rel="stylesheet" href="/static/style.css?v=15">
+    <link rel="stylesheet" href="/static/style.css?v=16">
 </head>
 <body>
     <!-- Library -->
@@ -138,6 +138,48 @@
                 <button class="popup-close" onclick="hideSettings()">×</button>
             </div>
             <div class="settings-body">
+                <label data-i18n="displayOptions">Display Options</label>
+                <div class="settings-checkboxes">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="settings-show-chinese" checked>
+                        <span data-i18n="showChinese">Chinese translation</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="settings-show-phonetic" checked>
+                        <span data-i18n="showPhonetic">Phonetic transcription</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="settings-show-morphology" checked>
+                        <span data-i18n="showMorphology">Word roots &amp; affixes</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="settings-show-english" checked>
+                        <span data-i18n="showEnglish">English definitions</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="settings-show-examples" checked>
+                        <span data-i18n="showExamples">Example sentences</span>
+                    </label>
+                </div>
+
+                <label data-i18n="targetLang">Translation language</label>
+                <select id="settings-target-lang" class="filter-select" style="width:100%;">
+                    <option value="zh-CN">中文 (Chinese)</option>
+                    <option value="ja">日本語 (Japanese)</option>
+                    <option value="ko">한국어 (Korean)</option>
+                    <option value="fr">Français (French)</option>
+                    <option value="de">Deutsch (German)</option>
+                    <option value="es">Español (Spanish)</option>
+                    <option value="pt">Português (Portuguese)</option>
+                    <option value="ru">Русский (Russian)</option>
+                    <option value="ar">العربية (Arabic)</option>
+                    <option value="th">ไทย (Thai)</option>
+                    <option value="vi">Tiếng Việt (Vietnamese)</option>
+                </select>
+                <p class="settings-hint" data-i18n="targetLangHint">Choose which language to translate into.</p>
+
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
+
                 <label data-i18n="aiCli">AI CLI Command</label>
                 <input type="text" id="settings-cli" placeholder="claude">
                 <p class="settings-hint" data-i18n="aiCliHint">Default: claude. You can change this to any AI CLI you have installed.</p>
@@ -145,10 +187,6 @@
                 <label data-i18n="promptArg">Prompt Argument</label>
                 <input type="text" id="settings-args" placeholder="-p">
                 <p class="settings-hint" data-i18n="promptArgHint">The CLI flag for passing a prompt. Claude uses -p.</p>
-
-                <label data-i18n="extraArgs">Extra Arguments</label>
-                <input type="text" id="settings-extra" placeholder="--no-input">
-                <p class="settings-hint" data-i18n="extraArgsHint">Additional CLI flags, space-separated. Leave empty if not needed.</p>
             </div>
             <div class="settings-footer">
                 <button onclick="saveSettings()" data-i18n="saveBtn">Save</button>
@@ -157,6 +195,6 @@
         </div>
     </div>
 
-    <script src="/static/app.js?v=15"></script>
+    <script src="/static/app.js?v=16"></script>
 </body>
 </html>

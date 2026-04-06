@@ -27,6 +27,12 @@ DATA_DIR.mkdir(exist_ok=True)
 DEFAULT_CONFIG = {
     'ai_cli': 'claude',
     'ai_args': ['-p'],
+    'target_lang': 'zh-CN',
+    'show_chinese': True,
+    'show_phonetic': True,
+    'show_morphology': True,
+    'show_english': True,
+    'show_examples': True,
 }
 
 for f, default in [(VOCAB_FILE, '{}'), (HIGHLIGHTS_FILE, '{}'),
@@ -301,13 +307,16 @@ def analyze_morphology(word):
 
 # === 免费翻译 API ===
 
-def translate_to_chinese(text):
-    """用 Google Translate 免费接口获取中文翻译"""
+def translate_text(text, target_lang=None):
+    """用 Google Translate 免费接口获取翻译"""
+    if target_lang is None:
+        config = load_config()
+        target_lang = config.get('target_lang', 'zh-CN')
     try:
         encoded = urllib.parse.quote(text[:500])
         url = (
             f"https://translate.googleapis.com/translate_a/single"
-            f"?client=gtx&sl=en&tl=zh-CN&dt=t&q={encoded}"
+            f"?client=gtx&sl=en&tl={target_lang}&dt=t&q={encoded}"
         )
         req = urllib.request.Request(url, headers={
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'
@@ -326,7 +335,7 @@ def translate_to_chinese(text):
     try:
         params = urllib.parse.urlencode({
             'q': text[:500],
-            'langpair': 'en|zh-CN'
+            'langpair': f'en|{target_lang}'
         })
         url = f"https://api.mymemory.translated.net/get?{params}"
         req = urllib.request.Request(url, headers={'User-Agent': 'EnglishReader/1.0'})
@@ -343,7 +352,8 @@ def translate_to_chinese(text):
 # === 免费词典 API ===
 
 def lookup_dictionary(word):
-    """用免费词典 API 查词，返回中英双语结果"""
+    """用免费词典 API 查词，根据用户设置返回结果"""
+    config = load_config()
     word_clean = word.strip().lower()
     url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{urllib.parse.quote(word_clean)}"
 
@@ -359,39 +369,44 @@ def lookup_dictionary(word):
         result_parts = []
 
         # 音标
-        phonetics = entry.get('phonetics', [])
-        phonetic_text = ''
-        for p in phonetics:
-            if p.get('text'):
-                phonetic_text = p['text']
-                break
-        if phonetic_text:
-            result_parts.append(f"{word_clean}  {phonetic_text}")
+        if config.get('show_phonetic', True):
+            phonetics = entry.get('phonetics', [])
+            phonetic_text = ''
+            for p in phonetics:
+                if p.get('text'):
+                    phonetic_text = p['text']
+                    break
+            if phonetic_text:
+                result_parts.append(f"{word_clean}  {phonetic_text}")
+            else:
+                result_parts.append(word_clean)
         else:
             result_parts.append(word_clean)
 
-        # 获取中文翻译
-        cn = translate_to_chinese(word_clean)
-        if cn:
-            result_parts.append(f"【中文】{cn}")
+        # 翻译
+        if config.get('show_chinese', True):
+            translated = translate_text(word_clean)
+            if translated:
+                result_parts.append(f"【翻译】{translated}")
 
-        # 词根词缀分析
-        morphology = analyze_morphology(word_clean)
-        if morphology:
-            result_parts.append(morphology)
+        # 词根词缀
+        if config.get('show_morphology', True):
+            morphology = analyze_morphology(word_clean)
+            if morphology:
+                result_parts.append(morphology)
 
         # 英文释义
-        for meaning in entry.get('meanings', [])[:3]:
-            pos = meaning.get('partOfSpeech', '')
-            defs = meaning.get('definitions', [])[:2]
-            for d in defs:
-                definition = d.get('definition', '')
-                example = d.get('example', '')
-                # 英文释义
-                line = f"  [{pos}] {definition}"
-                if example:
-                    line += f'\n    e.g. "{example}"'
-                result_parts.append(line)
+        if config.get('show_english', True):
+            for meaning in entry.get('meanings', [])[:3]:
+                pos = meaning.get('partOfSpeech', '')
+                defs = meaning.get('definitions', [])[:2]
+                for d in defs:
+                    definition = d.get('definition', '')
+                    example = d.get('example', '')
+                    line = f"  [{pos}] {definition}"
+                    if config.get('show_examples', True) and example:
+                        line += f'\n    e.g. "{example}"'
+                    result_parts.append(line)
 
         return '\n'.join(result_parts)
     except Exception:
@@ -432,7 +447,7 @@ def translate():
             return jsonify({'result': dict_result, 'source': 'dictionary'})
 
     # 短语/句子/词典没查到 → 免费翻译 API
-    cn = translate_to_chinese(word)
+    cn = translate_text(word)
     if cn:
         result = f"{word.strip()}\n【中文】{cn}"
         return jsonify({'result': result, 'source': 'translate'})

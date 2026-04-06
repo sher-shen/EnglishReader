@@ -39,12 +39,18 @@ const LANG = {
         highlights: 'highlights',
         deleteHighlight: 'Delete this highlight?',
         settingsTitle: 'Settings',
+        displayOptions: 'Display Options',
+        showChinese: 'Translation',
+        showPhonetic: 'Phonetic transcription',
+        showMorphology: 'Word roots & affixes',
+        showEnglish: 'English definitions',
+        showExamples: 'Example sentences',
+        targetLang: 'Translation language',
+        targetLangHint: 'Choose which language to translate into.',
         aiCli: 'AI CLI Command',
         aiCliHint: 'Default: claude. You can change this to any AI CLI you have installed.',
         promptArg: 'Prompt Argument',
         promptArgHint: 'The CLI flag for passing a prompt. Claude uses -p.',
-        extraArgs: 'Extra Arguments',
-        extraArgsHint: 'Additional CLI flags, space-separated. Leave empty if not needed.',
         saveBtn: 'Save',
         cancel: 'Cancel',
         settingsSaved: 'Settings saved',
@@ -93,6 +99,14 @@ const LANG = {
         highlights: '条高亮',
         deleteHighlight: '确定删除这条高亮吗？',
         settingsTitle: '设置',
+        displayOptions: '显示选项',
+        showChinese: '翻译',
+        showPhonetic: '音标',
+        showMorphology: '词根词缀',
+        showEnglish: '英文释义',
+        showExamples: '例句',
+        targetLang: '翻译目标语言',
+        targetLangHint: '选择翻译成哪种语言。',
         aiCli: 'AI CLI 命令',
         aiCliHint: '默认使用 claude。可以改成你安装的其他 AI CLI 工具。',
         promptArg: 'Prompt 参数',
@@ -1199,17 +1213,20 @@ async function showSettings() {
     const modal = document.getElementById('settings-modal');
     modal.style.display = 'flex';
 
-    // 加载当前配置
     try {
         const resp = await fetch('/api/config');
         const config = await resp.json();
         document.getElementById('settings-cli').value = config.ai_cli || 'claude';
         document.getElementById('settings-args').value = (config.ai_args || ['-p']).join(' ');
-        document.getElementById('settings-extra').value = (config.ai_extra_args || ['--no-input']).join(' ');
+        document.getElementById('settings-show-chinese').checked = config.show_chinese !== false;
+        document.getElementById('settings-show-phonetic').checked = config.show_phonetic !== false;
+        document.getElementById('settings-show-morphology').checked = config.show_morphology !== false;
+        document.getElementById('settings-show-english').checked = config.show_english !== false;
+        document.getElementById('settings-show-examples').checked = config.show_examples !== false;
+        document.getElementById('settings-target-lang').value = config.target_lang || 'zh-CN';
     } catch (e) {
         document.getElementById('settings-cli').value = 'claude';
         document.getElementById('settings-args').value = '-p';
-        document.getElementById('settings-extra').value = '--no-input';
     }
 }
 
@@ -1220,7 +1237,6 @@ function hideSettings() {
 async function saveSettings() {
     const cli = document.getElementById('settings-cli').value.trim() || 'claude';
     const args = document.getElementById('settings-args').value.trim().split(/\s+/).filter(Boolean);
-    const extra = document.getElementById('settings-extra').value.trim().split(/\s+/).filter(Boolean);
 
     try {
         await fetch('/api/config', {
@@ -1229,7 +1245,12 @@ async function saveSettings() {
             body: JSON.stringify({
                 ai_cli: cli,
                 ai_args: args.length ? args : ['-p'],
-                ai_extra_args: extra
+                target_lang: document.getElementById('settings-target-lang').value,
+                show_chinese: document.getElementById('settings-show-chinese').checked,
+                show_phonetic: document.getElementById('settings-show-phonetic').checked,
+                show_morphology: document.getElementById('settings-show-morphology').checked,
+                show_english: document.getElementById('settings-show-english').checked,
+                show_examples: document.getElementById('settings-show-examples').checked,
             })
         });
         hideSettings();

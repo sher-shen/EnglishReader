@@ -502,10 +502,25 @@ def get_vocabulary():
     return jsonify(load_json(VOCAB_FILE))
 
 
+def clean_word(text):
+    """Clean punctuation from start/end but keep internal hyphens."""
+    import re
+    # Strip whitespace
+    text = text.strip()
+    # Remove leading punctuation/symbols (keep letters, digits, hyphens inside)
+    text = re.sub(r'^[^a-zA-Z0-9]+', '', text)
+    # Remove trailing punctuation/symbols
+    text = re.sub(r'[^a-zA-Z0-9]+$', '', text)
+    # Collapse multiple spaces to one
+    text = re.sub(r'\s+', ' ', text)
+    return text
+
+
 @app.route('/api/vocabulary', methods=['POST'])
 def save_word():
     data = request.json
-    word = data.get('word', '').strip().lower()
+    raw_word = data.get('word', '')
+    word = clean_word(raw_word).lower()
     sentence = data.get('sentence', '')
     translation = data.get('translation', '')
     book_title = data.get('book_title', '')

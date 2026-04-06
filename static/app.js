@@ -236,7 +236,10 @@ async function openBook(filename, title) {
     // 加载已保存的高亮并渲染
     await loadAndApplyHighlights(filename);
 
-    // 每次翻页后重新应用高亮
+    // 加载生词表（用于标记）
+    await loadVocabWords();
+
+    // 每次翻页后重新应用高亮和生词标记
     currentRendition.on('relocated', () => {
         applyHighlightsToRendition();
     });
@@ -244,6 +247,9 @@ async function openBook(filename, title) {
     // 注入事件到 epub iframe
     currentRendition.hooks.content.register((contents) => {
         const doc = contents.document;
+
+        // 标记生词（下划虚线）
+        markVocabWords(doc);
 
         // 点击英文段落 → 展开/收起中文翻译
         doc.addEventListener('click', (e) => {
@@ -324,6 +330,94 @@ async function loadAndApplyHighlights(filename) {
         applyHighlightsToRendition();
     } catch (e) {
         savedHighlights = [];
+    }
+}
+
+// === 生词标记 ===
+let vocabWords = new Set();
+
+async function loadVocabWords() {
+    try {
+        const resp = await fetch('/api/vocabulary');
+        const vocab = await resp.json();
+        vocabWords = new Set(Object.keys(vocab));
+    } catch (e) {
+        vocabWords = new Set();
+    }
+}
+
+function markVocabWords(doc) {
+    if (!vocabWords.size) return;
+
+    // Inject style for vocab marking
+    let style = doc.getElementById('vocab-mark-style');
+    if (!style) {
+        style = doc.createElement('style');
+        style.id = 'vocab-mark-style';
+        doc.head.appendChild(style);
+    }
+    style.textContent = `
+        .vocab-mark {
+            border-bottom: 2px dotted #e67e22;
+            cursor: pointer;
+        }
+    `;
+
+    // Walk all text nodes and wrap vocab words
+    const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null);
+    const textNodes = [];
+    while (walker.nextNode()) {
+        textNodes.push(walker.currentNode);
+    }
+
+    const wordPattern = /\b[a-zA-Z'-]+\b/g;
+
+    for (const node of textNodes) {
+        const parent = node.parentElement;
+        if (!parent || parent.classList.contains('vocab-mark') ||
+            parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE') continue;
+
+        const text = node.textContent;
+        let hasMatch = false;
+        const fragments = [];
+        let lastIndex = 0;
+
+        text.replace(wordPattern, (match, offset) => {
+            const lower = match.toLowerCase().replace(/^['-]+|['-]+$/g, '');
+            if (vocabWords.has(lower)) {
+                hasMatch = true;
+                // Text before the match
+                if (offset > lastIndex) {
+                    fragments.push(doc.createTextNode(text.slice(lastIndex, offset)));
+                }
+                // The matched word wrapped in span
+                const span = doc.createElement('span');
+                span.className = 'vocab-mark';
+                span.textContent = match;
+                fragments.push(span);
+                lastIndex = offset + match.length;
+            }
+        });
+
+        if (hasMatch) {
+            // Remaining text
+            if (lastIndex < text.length) {
+                fragments.push(doc.createTextNode(text.slice(lastIndex)));
+            }
+            const container = doc.createDocumentFragment();
+            fragments.forEach(f => container.appendChild(f));
+            parent.replaceChild(container, node);
+        }
+    }
+}
+
+// After saving a word, refresh markings
+async function refreshVocabMarks() {
+    await loadVocabWords();
+    // Re-mark in current page by re-rendering
+    if (currentRendition && currentRendition.location) {
+        const cfi = currentRendition.location.start.cfi;
+        currentRendition.display(cfi);
     }
 }
 
@@ -457,6 +551,7 @@ async function saveSelection() {
             btn.textContent = '★';
             btn.classList.add('saved');
         }
+        refreshVocabMarks();
     } catch (e) {
         if (btn) btn.textContent = '!';
     }
@@ -778,6 +873,7 @@ async function saveCurrentWord() {
         const data = await resp.json();
         btn.textContent = `${t('saved')} (${data.total_occurrences})`;
         btn.classList.add('saved');
+        refreshVocabMarks();
     } catch (e) {
         btn.textContent = t('saveFailed');
     }
